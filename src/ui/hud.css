@@ -1,0 +1,1868 @@
+/* 杭州武林夜市 — 现代古风（宋韵江南 · 水墨泥金）主界面、漫游导览与书卷菜单样式 */
+
+#nk {
+  --y: #dfbe7f;       /* 泥金 / 琉璃暖金 */
+  --y2: #f3dfb6;      /* 宣纸浅金 */
+  --r: #d45b43;       /* 朱砂红 / 珊瑚朱 */
+  --r2: #b83b2b;      /* 印泥深朱 */
+  --rd: #471c16;      /* 胭脂暗底 */
+  --rdd: #1c0d0b;     /* 乌木深底 */
+  --c: #8abeb2;       /* 汝瓷天青 */
+  --c2: #a8d5cb;      /* 江南水碧 */
+  --cd: #162a28;      /* 黛青深底 */
+  --w: #f5efe2;       /* 温润宣纸白 */
+  --hp: #d45b43;      /* 气血朱红 */
+  --serif: "STKaiti", "Kaiti SC", "Songti SC", "STSong", "Noto Serif SC", "Source Han Serif SC", serif;
+  --sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --jp: var(--serif);
+
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  font-family: var(--sans);
+  font-weight: 500;
+  color: var(--w);
+  letter-spacing: 0.05em;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+#nk * { box-sizing: border-box; }
+#nk .hud {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.55s ease;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.68);
+}
+#nk .mono {
+  font-family: var(--sans);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+#nk .jp {
+  font-family: var(--serif);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+#nk.hud-hidden .hud,
+#nk.state-title .hud,
+#nk.state-paused .hud .hud-fade {
+  opacity: 0;
+}
+#nk.state-paused .hud {
+  opacity: 0.22;
+}
+.hud .tiny {
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: rgba(245, 239, 226, 0.68);
+}
+
+/* ===================== STATUS (top-left · 夜游体能状态) ===================== */
+.nk-status {
+  position: absolute;
+  left: 34px;
+  top: 28px;
+  width: 410px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(16, 20, 24, 0.76) 0%, rgba(16, 20, 24, 0.32) 85%, transparent 100%);
+  border-top: 1px solid rgba(223, 190, 127, 0.35);
+  border-bottom: 1px solid rgba(223, 190, 127, 0.16);
+  backdrop-filter: blur(4px);
+}
+.nk-status .head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.nk-status .head .tiny:first-child {
+  color: var(--y);
+  font-family: var(--serif);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+}
+.nk-status .head .tiny:last-child {
+  color: rgba(138, 190, 178, 0.85);
+}
+.nk-status .row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+/* 朱砂方印徽记 */
+.nk-level {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 21px;
+  color: #f9f2e7;
+  background: #b83b2b;
+  border-radius: 3px;
+  border: 1px solid rgba(249, 242, 231, 0.45);
+  box-shadow: inset 0 0 0 2px #b83b2b, inset 0 0 0 3px rgba(249, 242, 231, 0.32), 0 4px 12px rgba(184, 59, 43, 0.4);
+}
+.nk-hp {
+  flex: 1;
+}
+.nk-hp .bar {
+  position: relative;
+  height: 8px;
+  background: rgba(245, 239, 226, 0.12);
+  border: 1px solid rgba(223, 190, 127, 0.32);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.nk-hp .bar .fill {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  background: linear-gradient(90deg, #b83b2b 0%, #d45b43 55%, #dfbe7f 100%);
+  transform-origin: left;
+  transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+.nk-hp .bar .ghost {
+  position: absolute;
+  inset: 0;
+  background: rgba(243, 223, 182, 0.45);
+  transform-origin: left;
+  transition: transform 1.2s 0.3s ease;
+}
+.nk-hp .sub {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+.nk-hpnum {
+  font-family: var(--serif);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--y2);
+  min-width: 68px;
+  margin-left: 6px;
+}
+.nk-hpnum small {
+  font-size: 12px;
+  color: rgba(223, 190, 127, 0.68);
+  margin-left: 2px;
+}
+.nk-ram {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 8px 0 0 52px;
+}
+.nk-ram .lbl {
+  font-family: var(--serif);
+  font-size: 12px;
+  color: var(--c);
+  margin-right: 6px;
+  letter-spacing: 0.18em;
+}
+.nk-ram i {
+  width: 16px;
+  height: 6px;
+  background: var(--c);
+  border-radius: 1px;
+  box-shadow: 0 0 6px rgba(138, 190, 178, 0.45);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.nk-ram i.off {
+  background: rgba(138, 190, 178, 0.16);
+  box-shadow: none;
+}
+.nk-ram .val {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--c);
+  margin-left: 6px;
+}
+/* 零胶囊（Zero-Pill）纯净文本状态栏 */
+.nk-buffs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0 52px;
+  font-size: 11px;
+  color: rgba(223, 190, 127, 0.85);
+  letter-spacing: 0.1em;
+}
+.nk-buffs span.c {
+  color: var(--c2);
+}
+
+/* ===================== COMPASS (top-center · 罗盘方位) ===================== */
+.nk-compass {
+  position: absolute;
+  top: 26px;
+  left: 50%;
+  width: 540px;
+  height: 46px;
+  transform: translateX(-50%);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+}
+.nk-compass .strip {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  height: 30px;
+  white-space: nowrap;
+  will-change: transform;
+}
+.nk-compass .tick {
+  position: absolute;
+  top: 15px;
+  width: 1px;
+  height: 5px;
+  background: rgba(223, 190, 127, 0.42);
+}
+.nk-compass .tick.m {
+  height: 9px;
+  top: 11px;
+  background: rgba(223, 190, 127, 0.72);
+}
+.nk-compass .lab {
+  position: absolute;
+  top: -4px;
+  transform: translateX(-50%);
+  font-family: var(--serif);
+  font-size: 15px;
+  color: rgba(245, 239, 226, 0.78);
+}
+.nk-compass .lab.card {
+  color: var(--w);
+  font-size: 17px;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(223, 190, 127, 0.35);
+}
+.nk-compass .lab.n {
+  color: var(--y);
+}
+.nk-compass .base {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 26px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(223, 190, 127, 0.55), transparent);
+}
+.nk-compass .caret {
+  position: absolute;
+  left: 50%;
+  top: 27px;
+  width: 0;
+  height: 0;
+  border: 5px solid transparent;
+  border-bottom-color: var(--y);
+  transform: translateX(-50%);
+}
+.nk-compass .gig {
+  position: absolute;
+  top: 2px;
+  transform: translateX(-50%);
+  text-align: center;
+  will-change: left;
+}
+.nk-compass .gig .d {
+  width: 10px;
+  height: 10px;
+  margin: 0 auto;
+  background: var(--y);
+  transform: rotate(45deg);
+  box-shadow: 0 0 8px rgba(223, 190, 127, 0.8);
+}
+.nk-compass .gig .m {
+  margin-top: 18px;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--y);
+}
+.nk-heading {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--serif);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: rgba(223, 190, 127, 0.82);
+  letter-spacing: 0.18em;
+}
+
+/* ===================== MINIMAP (top-right · 钱塘街巷舆图) ===================== */
+.nk-mapwrap {
+  position: absolute;
+  right: 34px;
+  top: 26px;
+  width: 290px;
+}
+.nk-maphead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 6px;
+}
+.nk-time {
+  font-family: var(--serif);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--y2);
+  letter-spacing: 0.06em;
+}
+.nk-time small {
+  font-size: 12px;
+  margin-left: 5px;
+  color: var(--y);
+  font-weight: 500;
+}
+.nk-weather {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--c2);
+}
+.nk-weather svg {
+  width: 17px;
+  height: 17px;
+}
+.nk-map {
+  position: relative;
+  width: 290px;
+  height: 236px;
+  background: rgba(14, 18, 22, 0.85);
+  border: 1px solid rgba(223, 190, 127, 0.42);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55), inset 0 0 0 3px rgba(14, 18, 22, 0.85), inset 0 0 0 4px rgba(223, 190, 127, 0.16);
+  border-radius: 2px;
+}
+.nk-map canvas {
+  position: absolute;
+  inset: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+}
+.nk-map .n {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  display: grid;
+  place-items: center;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 11px;
+  color: #f9f2e7;
+  background: #b83b2b;
+  border: 1px solid rgba(249, 242, 231, 0.5);
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+.nk-map .corner {
+  position: absolute;
+  left: 10px;
+  bottom: 6px;
+  font-family: var(--serif);
+  font-size: 10px;
+  color: rgba(223, 190, 127, 0.72);
+  letter-spacing: 0.16em;
+}
+.nk-mapfoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+}
+.nk-mapfoot .loc {
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--y);
+}
+.nk-mapfoot .loc b {
+  color: var(--w);
+  font-weight: 700;
+}
+.nk-eddies {
+  position: absolute;
+  right: 0;
+  top: 306px;
+  text-align: right;
+}
+.nk-eddies .v {
+  font-family: var(--serif);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--y);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+.nk-eddies .v small {
+  font-size: 13px;
+  margin-right: 4px;
+  color: rgba(223, 190, 127, 0.8);
+}
+.nk-eddies .delta {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--c2);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: all 0.4s;
+}
+.nk-eddies .delta.show {
+  opacity: 1;
+  transform: none;
+}
+
+/* ===================== OBJECTIVE TRACKER (街坊寻访引路) ===================== */
+.nk-obj {
+  position: absolute;
+  right: 34px;
+  top: 368px;
+  width: 370px;
+  text-align: left;
+  padding: 12px 16px;
+  background: linear-gradient(90deg, rgba(16, 20, 24, 0.76) 0%, rgba(16, 20, 24, 0.35) 75%, transparent 100%);
+  border-top: 1px solid rgba(223, 190, 127, 0.32);
+  border-bottom: 1px solid rgba(223, 190, 127, 0.14);
+  transition: opacity 0.4s, transform 0.4s;
+}
+.nk-obj .tag {
+  font-family: var(--serif);
+  font-size: 11px;
+  color: rgba(223, 190, 127, 0.78);
+  letter-spacing: 0.2em;
+}
+.nk-obj .title {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--y2);
+  margin: 4px 0 6px;
+  letter-spacing: 0.08em;
+}
+.nk-obj .line {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 15px;
+  color: var(--w);
+  letter-spacing: 0.04em;
+  line-height: 1.45;
+}
+.nk-obj .line .ic {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  margin-top: 5px;
+  border: 1.5px solid var(--y);
+  display: grid;
+  place-items: center;
+  transform: rotate(45deg);
+}
+.nk-obj .line .ic::after {
+  content: '';
+  width: 4px;
+  height: 4px;
+  background: var(--r);
+}
+.nk-obj .dist {
+  margin: 6px 0 0 22px;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--y);
+  letter-spacing: 0.08em;
+}
+.nk-obj.out {
+  opacity: 0;
+  transform: translateX(24px);
+}
+
+/* ===================== CROSSHAIR / PROMPT / WAYPOINT ===================== */
+.nk-cross {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  transition: opacity 0.25s, transform 0.2s;
+}
+.nk-cross i {
+  position: absolute;
+  background: rgba(245, 239, 226, 0.8);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+}
+.nk-cross .dot { left: 13px; top: 13px; width: 2px; height: 2px; background: var(--y); }
+.nk-cross .t { left: 13.5px; top: 3px; width: 1px; height: 5px; }
+.nk-cross .b { left: 13.5px; bottom: 3px; width: 1px; height: 5px; }
+.nk-cross .l { top: 13.5px; left: 3px; width: 5px; height: 1px; }
+.nk-cross .r { top: 13.5px; right: 3px; width: 5px; height: 1px; }
+.nk-cross.wide { transform: scale(1.3); }
+.nk-cross.hidden { opacity: 0; }
+
+.nk-prompt {
+  position: absolute;
+  left: calc(50% + 64px);
+  top: calc(50% + 28px);
+  min-width: 260px;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+.nk-prompt.show {
+  opacity: 1;
+  transform: none;
+}
+.nk-prompt .sub {
+  font-family: var(--serif);
+  font-size: 11px;
+  color: var(--y);
+  letter-spacing: 0.2em;
+  margin: 0 0 4px 2px;
+}
+.nk-prompt .opt {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 38px;
+  padding: 0 20px 0 8px;
+  background: rgba(20, 16, 14, 0.9);
+  border: 1px solid rgba(223, 190, 127, 0.65);
+  border-radius: 2px;
+  color: var(--w);
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+.nk-key {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 7px;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 12px;
+  border: 1px solid rgba(223, 190, 127, 0.55);
+  border-radius: 2px;
+  color: var(--y);
+  background: rgba(223, 190, 127, 0.08);
+}
+.nk-prompt .opt .nk-key {
+  color: #f9f2e7;
+  background: #b83b2b;
+  border-color: rgba(249, 242, 231, 0.45);
+}
+
+.nk-wp {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  will-change: transform;
+  transition: opacity 0.3s;
+}
+.nk-wp .d {
+  width: 20px;
+  height: 20px;
+  margin: 0 auto;
+  border: 1.5px solid var(--y);
+  background: rgba(184, 59, 43, 0.72);
+  transform: rotate(45deg);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 12px rgba(223, 190, 127, 0.55);
+}
+.nk-wp .d::after {
+  content: '访';
+  transform: rotate(-45deg);
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 11px;
+  color: #f9f2e7;
+}
+.nk-wp .m {
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--y2);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.95);
+}
+.nk-wp.edge .d {
+  border-color: var(--y2);
+}
+
+/* ===================== DISTRICT POP-UP (水墨洒金街巷题名) ===================== */
+.nk-district {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 18%;
+  text-align: center;
+  opacity: 0;
+}
+.nk-district.show {
+  animation: nkDistrict 4.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.nk-district .pre {
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 0.45em;
+  color: var(--y);
+  margin-bottom: 8px;
+}
+.nk-district .name {
+  position: relative;
+  display: inline-block;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 1.1;
+  letter-spacing: 0.18em;
+  color: var(--w);
+  text-shadow: 0 4px 28px rgba(0, 0, 0, 0.75), 0 0 24px rgba(223, 190, 127, 0.3);
+  padding: 0 0.1em;
+}
+.nk-district .rule {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 10px auto 0;
+}
+.nk-district .rule::before,
+.nk-district .rule::after {
+  content: '';
+  height: 1px;
+  width: 0;
+  background: linear-gradient(90deg, transparent, var(--y), transparent);
+  animation: nkGrow 0.9s 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.nk-district .area {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--y);
+  letter-spacing: 0.28em;
+}
+.nk-district .jp {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--serif);
+  font-size: 13px;
+  color: rgba(245, 239, 226, 0.75);
+  letter-spacing: 0.4em;
+}
+
+/* ===================== TOASTS (街坊传书提示) ===================== */
+.nk-toasts {
+  position: absolute;
+  right: 34px;
+  top: 540px;
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+}
+.nk-toast {
+  position: relative;
+  width: 360px;
+  padding: 14px 18px;
+  background: rgba(18, 20, 24, 0.92);
+  border: 1px solid rgba(223, 190, 127, 0.42);
+  border-radius: 2px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.65);
+  animation: nkToastIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.nk-toast .k {
+  font-family: var(--serif);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: var(--c2);
+}
+.nk-toast .h {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 21px;
+  color: var(--y2);
+  letter-spacing: 0.08em;
+  margin: 4px 0 8px;
+}
+.nk-toast .rw {
+  display: flex;
+  gap: 20px;
+  font-size: 14px;
+  color: var(--w);
+}
+.nk-toast .rw b {
+  font-variant-numeric: tabular-nums;
+  color: var(--y);
+  font-size: 16px;
+  margin-right: 4px;
+}
+.nk-toast .rw b.c {
+  color: var(--c2);
+}
+.nk-toast.out {
+  animation: nkToastOut 0.45s ease forwards;
+}
+.nk-toast.info .h {
+  color: var(--y);
+  font-size: 19px;
+}
+
+/* ===================== BOTTOM-LEFT / BOTTOM-RIGHT ===================== */
+.nk-bl {
+  position: absolute;
+  left: 34px;
+  bottom: 24px;
+}
+.nk-slots {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+.nk-slot {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  background: rgba(16, 20, 24, 0.84);
+  border: 1px solid rgba(223, 190, 127, 0.44);
+  border-radius: 3px;
+  color: var(--y);
+  transition: all 0.2s ease;
+}
+.nk-slot .slot-badge {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  padding: 0 4px;
+  min-width: 15px;
+  height: 15px;
+  line-height: 15px;
+  text-align: center;
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 10px;
+  color: #f9f2e7;
+  background: rgba(184, 59, 43, 0.88);
+  border: 1px solid rgba(249, 242, 231, 0.45);
+  border-radius: 2px;
+  letter-spacing: 0;
+}
+.nk-slot svg {
+  width: 24px;
+  height: 24px;
+}
+.nk-slotw {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 60px;
+}
+.nk-slotw > .nk-key {
+  color: var(--y2);
+  font-size: 11px;
+  min-width: 38px;
+  height: 20px;
+  padding: 0 6px;
+  letter-spacing: 0.04em;
+}
+.nk-slotw > .lb {
+  font-family: var(--serif);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: rgba(245, 239, 226, 0.88);
+  margin-top: -1px;
+  white-space: nowrap;
+}
+.nk-slotw.active .nk-slot,
+.nk-slotw:hover .nk-slot {
+  border-color: var(--y2);
+  color: #f9f2e7;
+  background: rgba(184, 59, 43, 0.36);
+  box-shadow: 0 0 14px rgba(223, 190, 127, 0.28);
+}
+.nk-slotw.active > .nk-key,
+.nk-slotw.active > .lb {
+  color: var(--y);
+}
+.nk-keybar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin-top: 10px;
+  padding: 6px 10px;
+  background: rgba(14, 18, 22, 0.78);
+  border: 1px solid rgba(223, 190, 127, 0.28);
+  border-radius: 2px;
+}
+.nk-keybar .kb-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--serif);
+  font-size: 11px;
+  color: rgba(245, 239, 226, 0.85);
+  letter-spacing: 0.06em;
+}
+.nk-keybar kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 10px;
+  color: var(--y2);
+  background: rgba(223, 190, 127, 0.14);
+  border: 1px solid rgba(223, 190, 127, 0.48);
+  border-radius: 2px;
+}
+.nk-bl .tiny {
+  margin-top: 7px;
+}
+
+.nk-br {
+  position: absolute;
+  right: 34px;
+  bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.nk-stance {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--y2);
+}
+.nk-stance svg {
+  width: 20px;
+  height: 28px;
+}
+.nk-stance.crouch {
+  color: var(--c2);
+}
+
+/* Speedometer (代步车罗盘仪) */
+.nk-speedo {
+  position: absolute;
+  right: 60px;
+  bottom: 68px;
+  width: 300px;
+  height: 170px;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.35s, transform 0.35s;
+}
+.nk-speedo.show {
+  opacity: 1;
+  transform: none;
+}
+.nk-speedo svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.nk-speedo .num {
+  position: absolute;
+  right: 30px;
+  bottom: 34px;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 68px;
+  line-height: 1;
+  color: var(--w);
+  text-shadow: 0 2px 16px rgba(223, 190, 127, 0.45);
+  font-variant-numeric: tabular-nums;
+}
+.nk-speedo .unit {
+  position: absolute;
+  right: 32px;
+  bottom: 14px;
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--y);
+  letter-spacing: 0.24em;
+}
+.nk-speedo .gear {
+  position: absolute;
+  left: 146px;
+  bottom: 22px;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 26px;
+  color: var(--y);
+}
+.nk-speedo .gear small {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: rgba(223, 190, 127, 0.72);
+  letter-spacing: 0.16em;
+}
+.nk-speedo .hint {
+  position: absolute;
+  right: 30px;
+  bottom: -26px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  color: rgba(245, 239, 226, 0.8);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+.nk-speedo .hint .nk-key {
+  font-size: 10px;
+  height: 18px;
+  min-width: 20px;
+}
+.nk-speedo .car {
+  position: absolute;
+  right: 30px;
+  top: 0;
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--y2);
+  letter-spacing: 0.18em;
+}
+
+.nk-glitchbar {
+  display: none;
+}
+
+/* ===================== TITLE SCREEN (现代古风 · 宋韵江南画卷首页) ===================== */
+.nk-title {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 1.1s ease;
+  display: none;
+  background:
+    radial-gradient(ellipse at 65% 48%, rgba(28, 22, 16, 0.08) 0%, rgba(10, 13, 17, 0.68) 72%, rgba(8, 10, 14, 0.88) 100%),
+    linear-gradient(95deg, rgba(10, 12, 15, 0.90) 0%, rgba(12, 15, 19, 0.62) 44%, rgba(12, 15, 19, 0.12) 76%, rgba(10, 12, 15, 0.55) 100%);
+}
+#nk.state-title .nk-title {
+  display: block;
+  opacity: 1;
+}
+#nk.state-title.title-leaving .nk-title {
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+/* 宋式洒金双线外框与四角回纹装饰 */
+.nk-title .frame {
+  position: absolute;
+  inset: 28px;
+  border: 1px solid rgba(223, 190, 127, 0.28);
+  box-shadow: inset 0 0 0 4px rgba(10, 12, 15, 0.35), inset 0 0 0 5px rgba(223, 190, 127, 0.12);
+  pointer-events: none;
+}
+.nk-title .frame .c-orn {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: rgba(223, 190, 127, 0.68);
+  border-style: solid;
+}
+.nk-title .frame .c-orn.tl { left: 6px; top: 6px; border-width: 2px 0 0 2px; }
+.nk-title .frame .c-orn.tr { right: 6px; top: 6px; border-width: 2px 2px 0 0; }
+.nk-title .frame .c-orn.bl { left: 6px; bottom: 6px; border-width: 0 0 2px 2px; }
+.nk-title .frame .c-orn.br { right: 6px; bottom: 6px; border-width: 0 2px 2px 0; }
+
+.nk-title .topline {
+  position: absolute;
+  left: 56px;
+  right: 56px;
+  top: 86px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(223, 190, 127, 0.55), rgba(223, 190, 127, 0.15) 65%, transparent);
+  pointer-events: none;
+}
+
+/* 左上角：朱砂篆印 + 钱塘风物志题记 */
+.nk-title .corner-tl {
+  position: absolute;
+  left: 58px;
+  top: 42px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.nk-title .seal-stamp {
+  width: 36px;
+  height: 36px;
+  background: #b83b2b;
+  color: #f9f2e7;
+  border: 1px solid rgba(249, 242, 231, 0.5);
+  box-shadow: inset 0 0 0 2px #b83b2b, inset 0 0 0 3px rgba(249, 242, 231, 0.32), 0 4px 14px rgba(184, 59, 43, 0.35);
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.08em;
+}
+.nk-title .corner-tl .tiny {
+  font-family: var(--serif);
+  font-size: 12px;
+  color: rgba(245, 239, 226, 0.78);
+  line-height: 1.45;
+  letter-spacing: 0.16em;
+}
+
+/* 右上角：时令风物注记 */
+.nk-title .corner-tr {
+  position: absolute;
+  right: 60px;
+  top: 50px;
+}
+.nk-title .season-meta {
+  font-family: var(--serif);
+  font-size: 13px;
+  color: rgba(223, 190, 127, 0.82);
+  letter-spacing: 0.24em;
+}
+
+/* 左侧竖排引首题词 */
+.nk-title .vert {
+  position: absolute;
+  left: 54px;
+  top: 52%;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  font-family: var(--serif);
+  font-size: 13px;
+  color: rgba(223, 190, 127, 0.58);
+  letter-spacing: 0.38em;
+  white-space: nowrap;
+  border-left: 1px solid rgba(223, 190, 127, 0.22);
+  padding-left: 8px;
+}
+
+/* 右侧竖排古风诗轴 */
+.nk-title .poetic-scroll {
+  position: absolute;
+  right: 76px;
+  top: 22%;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: flex-start;
+  gap: 22px;
+  opacity: 0;
+  animation: nkFadeUp 1s 0.75s forwards;
+  pointer-events: none;
+}
+.nk-title .poetic-scroll .scroll-line {
+  writing-mode: vertical-rl;
+  font-family: var(--serif);
+  font-size: 17px;
+  color: rgba(245, 239, 226, 0.82);
+  letter-spacing: 0.36em;
+  line-height: 1.6;
+  padding: 14px 6px;
+  border-top: 1px solid rgba(223, 190, 127, 0.45);
+  border-bottom: 1px solid rgba(223, 190, 127, 0.45);
+  background: linear-gradient(180deg, rgba(16, 20, 24, 0.42), rgba(16, 20, 24, 0.15));
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.75);
+}
+.nk-title .poetic-scroll .scroll-line:nth-child(2) {
+  margin-top: 38px;
+  color: rgba(223, 190, 127, 0.86);
+}
+.nk-title .poetic-scroll .scroll-seal {
+  margin-top: auto;
+  padding: 5px 4px;
+  background: rgba(184, 59, 43, 0.88);
+  border: 1px solid rgba(249, 242, 231, 0.45);
+  border-radius: 2px;
+  color: #f9f2e7;
+  font-family: var(--serif);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+/* 主视觉核心区：宋韵书法大字 + 朱砂落款印 */
+.nk-title .logo {
+  position: absolute;
+  left: 10%;
+  top: 21%;
+  max-width: 760px;
+}
+.nk-title .logo .kicker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--y);
+  letter-spacing: 0.42em;
+  margin-bottom: 16px;
+  opacity: 0;
+  animation: nkFadeUp 0.8s 0.25s forwards;
+}
+.nk-title .logo .kicker .k-line {
+  width: 36px;
+  height: 1px;
+  background: var(--y);
+}
+
+.nk-logo-wrap {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  animation: nkLogoIn 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.nk-logo {
+  position: relative;
+  font-family: var(--serif);
+  font-weight: 900;
+  font-size: clamp(72px, 6.8vw, 112px);
+  line-height: 1.08;
+  letter-spacing: 0.12em;
+  color: #f7eedc;
+  text-shadow:
+    0 4px 18px rgba(0, 0, 0, 0.78),
+    0 0 38px rgba(223, 190, 127, 0.28);
+}
+.nk-logo span {
+  display: block;
+}
+.nk-logo span:nth-of-type(1) {
+  font-size: 0.62em;
+  color: var(--y);
+  letter-spacing: 0.28em;
+  margin-bottom: 4px;
+}
+.nk-logo span:nth-of-type(2) {
+  margin-left: 2px;
+  background: linear-gradient(180deg, #fffaf0 0%, #f3dfb6 58%, #d8ae64 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.65));
+}
+
+/* 标题右侧朱砂闲章 */
+.nk-title .title-seal {
+  width: 42px;
+  height: 68px;
+  margin-bottom: 12px;
+  background: #b83b2b;
+  border: 1px solid rgba(249, 242, 231, 0.55);
+  box-shadow: inset 0 0 0 2px #b83b2b, inset 0 0 0 3.5px rgba(249, 242, 231, 0.38), 0 6px 18px rgba(184, 59, 43, 0.45);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #f9f2e7;
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.1em;
+}
+
+.nk-title .jpline {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 24px 0 0 4px;
+  opacity: 0;
+  animation: nkFadeUp 0.8s 0.55s forwards;
+}
+.nk-title .jpline .jp {
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--y2);
+  letter-spacing: 0.36em;
+}
+.nk-title .jpline .orn {
+  color: var(--r);
+  font-size: 13px;
+}
+.nk-title .jpline i {
+  display: block;
+  width: 96px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(223, 190, 127, 0.75), rgba(223, 190, 127, 0.15));
+}
+
+.nk-title .tagline {
+  margin: 14px 0 0 6px;
+  font-family: var(--serif);
+  font-size: 17px;
+  color: rgba(245, 239, 226, 0.84);
+  letter-spacing: 0.32em;
+  opacity: 0;
+  animation: nkFadeUp 0.8s 0.75s forwards;
+}
+
+/* 江南四景导览条（无胶囊纯文字排版） */
+.nk-title .scenery-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 0 6px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(223, 190, 127, 0.22);
+  font-family: var(--serif);
+  font-size: 13px;
+  color: rgba(223, 190, 127, 0.82);
+  letter-spacing: 0.16em;
+  opacity: 0;
+  animation: nkFadeUp 0.8s 0.95s forwards;
+}
+.nk-title .scenery-strip span[aria-hidden="true"] {
+  color: rgba(223, 190, 127, 0.35);
+}
+
+/* 步入画卷交互区（乌木描金令牌按钮） */
+.nk-title .press {
+  position: absolute;
+  left: 10%;
+  bottom: 15%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  opacity: 0;
+  animation: nkFadeUp 0.7s 1.15s forwards;
+}
+.nk-title .press .btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 54px;
+  padding: 0 30px 0 14px;
+  background: linear-gradient(135deg, rgba(26, 22, 18, 0.92), rgba(18, 15, 13, 0.88));
+  border: 1px solid rgba(223, 190, 127, 0.68);
+  border-radius: 3px;
+  color: var(--w);
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55), inset 0 0 0 3px rgba(18, 15, 13, 0.9), inset 0 0 0 4px rgba(223, 190, 127, 0.18);
+  transition: all 0.25s ease;
+}
+.nk-title .press .btn:hover {
+  border-color: var(--y2);
+  background: linear-gradient(135deg, rgba(44, 32, 22, 0.95), rgba(28, 20, 16, 0.92));
+  box-shadow: 0 10px 32px rgba(223, 190, 127, 0.25), inset 0 0 0 3px rgba(28, 20, 16, 0.9), inset 0 0 0 4px rgba(223, 190, 127, 0.35);
+  transform: translateY(-1px);
+}
+.nk-title .press .btn.btn-enter .nk-key {
+  background: #b83b2b;
+  color: #f9f2e7;
+  border-color: rgba(249, 242, 231, 0.45);
+  height: 28px;
+  padding: 0 9px;
+  font-size: 13px;
+}
+.nk-title .press .btn.btn-studio {
+  height: 54px;
+  padding: 0 24px 0 14px;
+  background: rgba(16, 22, 24, 0.78);
+  border-color: rgba(138, 190, 178, 0.48);
+  color: var(--c2);
+  font-size: 17px;
+  letter-spacing: 0.18em;
+}
+.nk-title .press .btn.btn-studio .nk-key {
+  color: var(--c2);
+  border-color: rgba(138, 190, 178, 0.45);
+  background: rgba(138, 190, 178, 0.1);
+}
+.nk-title .press .btn.btn-studio:hover {
+  border-color: var(--c2);
+  background: rgba(22, 36, 38, 0.88);
+  color: var(--w);
+}
+.nk-title .press .blink {
+  animation: nkBlink 2.2s ease-in-out infinite;
+}
+.nk-title .press .tiny {
+  font-family: var(--serif);
+  font-size: 12px;
+  color: rgba(245, 239, 226, 0.68);
+  line-height: 1.55;
+  letter-spacing: 0.12em;
+  margin-left: 4px;
+}
+
+/* 底部跋文与印记 */
+.nk-title .legal {
+  position: absolute;
+  left: 58px;
+  right: 58px;
+  bottom: 42px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-top: 12px;
+  border-top: 1px solid rgba(223, 190, 127, 0.18);
+}
+.nk-title .legal .tiny {
+  font-family: var(--serif);
+  font-size: 11px;
+  line-height: 1.65;
+  color: rgba(245, 239, 226, 0.56);
+  max-width: 580px;
+  letter-spacing: 0.08em;
+}
+.nk-title .legal .ver {
+  font-family: var(--serif);
+  font-size: 12px;
+  color: rgba(223, 190, 127, 0.72);
+  letter-spacing: 0.18em;
+  text-align: right;
+  line-height: 1.5;
+}
+.nk-title .flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(243, 223, 182, 0.45), transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+}
+#nk.title-leaving .nk-title .flash {
+  animation: nkFlash 0.65s ease-out;
+}
+
+/* ===================== PAUSE MENU (钱塘游记 · 小憩书卷菜单) ===================== */
+.nk-menu {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  display: none;
+  color: var(--w);
+  background:
+    radial-gradient(ellipse at 65% 40%, rgba(36, 28, 20, 0.75), rgba(12, 15, 19, 0.94) 72%);
+  backdrop-filter: blur(10px);
+}
+#nk.state-paused .nk-menu {
+  display: block;
+  animation: nkMenuIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nk-menu .grid {
+  position: absolute;
+  inset: 28px;
+  border: 1px solid rgba(223, 190, 127, 0.24);
+  pointer-events: none;
+}
+.nk-menu .topbar {
+  position: absolute;
+  left: 56px;
+  right: 56px;
+  top: 64px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(223, 190, 127, 0.55) 20%, rgba(223, 190, 127, 0.55) 80%, transparent);
+}
+.nk-menu .header {
+  position: absolute;
+  left: 50%;
+  top: 16px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.nk-menu .header .ico {
+  width: 34px;
+  height: 34px;
+  background: #b83b2b;
+  border: 1px solid rgba(249, 242, 231, 0.45);
+  border-radius: 2px;
+  display: grid;
+  place-items: center;
+  color: #f9f2e7;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1.1;
+}
+.nk-menu .header h1 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--y2);
+  letter-spacing: 0.16em;
+}
+.nk-menu .tabs {
+  position: absolute;
+  left: 50%;
+  top: 64px;
+  transform: translateX(-50%);
+  display: flex;
+}
+.nk-menu .tabs span {
+  width: 110px;
+  height: 2px;
+  background: rgba(223, 190, 127, 0.22);
+  margin: 0 4px;
+  transition: background 0.25s;
+}
+.nk-menu .tabs span.on {
+  background: var(--y);
+  box-shadow: 0 0 8px rgba(223, 190, 127, 0.6);
+}
+.nk-menu .subtitle {
+  position: absolute;
+  left: 50%;
+  top: 78px;
+  transform: translateX(-50%);
+  font-family: var(--serif);
+  font-size: 14px;
+  color: rgba(223, 190, 127, 0.8);
+  letter-spacing: 0.22em;
+}
+.nk-menu .protocol {
+  position: absolute;
+  left: 58px;
+  top: 76px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.nk-menu .protocol .tiny {
+  font-family: var(--serif);
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(245, 239, 226, 0.58);
+  letter-spacing: 0.1em;
+}
+.nk-menu .vert {
+  position: absolute;
+  left: 46px;
+  top: 52%;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  font-family: var(--serif);
+  font-size: 12px;
+  letter-spacing: 0.35em;
+  color: rgba(223, 190, 127, 0.42);
+  white-space: nowrap;
+}
+.nk-menu .left {
+  position: absolute;
+  left: 96px;
+  top: 150px;
+  width: 360px;
+}
+.nk-menu .left h2 {
+  margin: 0 0 18px;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--y);
+  letter-spacing: 0.18em;
+}
+.nk-mi {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  margin-bottom: 10px;
+  padding: 0 20px;
+  cursor: pointer;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(245, 239, 226, 0.82);
+  background: rgba(22, 26, 30, 0.65);
+  border: 1px solid rgba(223, 190, 127, 0.24);
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+.nk-mi .ix {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: rgba(223, 190, 127, 0.5);
+}
+.nk-mi.sel {
+  color: var(--y2);
+  background: linear-gradient(90deg, rgba(184, 59, 43, 0.34), rgba(44, 32, 22, 0.45));
+  border-color: rgba(223, 190, 127, 0.75);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+.nk-mi.sel .ix {
+  color: var(--y);
+}
+
+.nk-menu .right {
+  position: absolute;
+  right: 106px;
+  top: 150px;
+  width: 640px;
+}
+.nk-menu .right h2 {
+  margin: 0 0 18px;
+  text-align: right;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--y);
+  letter-spacing: 0.18em;
+}
+.nk-menu .panel {
+  display: none;
+}
+.nk-menu .panel.on {
+  display: block;
+  animation: nkPanelIn 0.3s ease;
+}
+.nk-set {
+  margin-bottom: 8px;
+}
+.nk-set .lab {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--w);
+  background: rgba(22, 26, 30, 0.68);
+  border: 1px solid rgba(223, 190, 127, 0.22);
+  border-radius: 2px;
+}
+.nk-set .lab .v {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--y);
+  font-size: 16px;
+}
+.nk-set .ctl {
+  display: flex;
+  gap: 4px;
+  margin-top: 3px;
+  height: 28px;
+}
+.nk-set .ctl div {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: rgba(18, 22, 26, 0.72);
+  border: 1px solid rgba(223, 190, 127, 0.22);
+  color: var(--y);
+  font-size: 13px;
+  transition: background 0.15s;
+}
+.nk-set .ctl div:hover {
+  background: rgba(223, 190, 127, 0.18);
+}
+.nk-set .ctl .pips {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: default;
+}
+.nk-set .ctl .pips i {
+  width: 24px;
+  height: 5px;
+  background: rgba(223, 190, 127, 0.2);
+  border-radius: 1px;
+}
+.nk-set .ctl .pips i.on {
+  background: var(--y);
+}
+.nk-set.sel .lab {
+  background: linear-gradient(90deg, rgba(184, 59, 43, 0.35), rgba(44, 32, 22, 0.45));
+  border-color: rgba(223, 190, 127, 0.65);
+}
+.nk-set.sel .lab .v {
+  color: var(--y2);
+}
+.nk-set.sel .ctl div {
+  border-color: rgba(223, 190, 127, 0.55);
+}
+.nk-set .note {
+  font-family: var(--serif);
+  font-size: 11px;
+  color: var(--y);
+  letter-spacing: 0.12em;
+  margin-top: 4px;
+  text-align: right;
+  min-height: 14px;
+  cursor: pointer;
+}
+.nk-set .ctl .pips.bool {
+  gap: 4px;
+  padding: 0 10px;
+}
+.nk-set .ctl .pips.bool b {
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  color: rgba(245, 239, 226, 0.45);
+  padding: 3px 0;
+  border-radius: 2px;
+}
+.nk-set .ctl .pips.bool b.on {
+  color: #f9f2e7;
+  background: #b83b2b;
+}
+.nk-menu .desc {
+  margin-top: 14px;
+  padding: 12px 16px;
+  min-height: 64px;
+  font-family: var(--serif);
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(245, 239, 226, 0.8);
+  letter-spacing: 0.05em;
+  background: rgba(16, 20, 24, 0.72);
+  border: 1px solid rgba(223, 190, 127, 0.28);
+  border-radius: 2px;
+}
+.nk-menu .desc b {
+  display: block;
+  font-size: 13px;
+  color: var(--y);
+  letter-spacing: 0.18em;
+  margin-bottom: 4px;
+}
+
+.nk-ctrls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+}
+.nk-ctrls .c {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 14px;
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--w);
+  background: rgba(22, 26, 30, 0.65);
+  border: 1px solid rgba(223, 190, 127, 0.22);
+  border-radius: 2px;
+}
+.nk-ctrls .c .k {
+  display: flex;
+  gap: 4px;
+}
+.nk-ctrls .c .nk-key {
+  font-size: 11px;
+  height: 22px;
+}
+
+.nk-menu .quote {
+  margin-top: 24px;
+  font-family: var(--serif);
+  font-size: 14px;
+  color: rgba(223, 190, 127, 0.78);
+  letter-spacing: 0.12em;
+  line-height: 1.6;
+}
+.nk-menu .stats {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.nk-menu .stats > div {
+  padding: 12px 14px;
+  background: rgba(20, 24, 28, 0.72);
+  border: 1px solid rgba(223, 190, 127, 0.24);
+  border-radius: 2px;
+}
+.nk-menu .stats .k {
+  font-family: var(--serif);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: rgba(245, 239, 226, 0.65);
+}
+.nk-menu .stats .v {
+  font-family: var(--serif);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--y2);
+  margin-top: 5px;
+}
+.nk-menu .stats .v.c {
+  color: var(--c2);
+}
+.nk-menu .journal {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.nk-menu .jr {
+  display: grid;
+  grid-template-columns: 28px 1fr 180px 110px;
+  align-items: center;
+  height: 38px;
+  padding: 0 14px 0 8px;
+  font-family: var(--serif);
+  font-size: 15px;
+  color: rgba(245, 239, 226, 0.58);
+  background: rgba(20, 24, 28, 0.55);
+  border: 1px solid rgba(223, 190, 127, 0.14);
+  border-radius: 2px;
+}
+.nk-menu .jr .st {
+  text-align: center;
+  color: var(--y);
+}
+.nk-menu .jr .ar {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+.nk-menu .jr .rw {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  text-align: right;
+}
+.nk-menu .jr.active {
+  color: var(--y2);
+  background: linear-gradient(90deg, rgba(184, 59, 43, 0.28), rgba(44, 32, 22, 0.25));
+  border-color: rgba(223, 190, 127, 0.55);
+}
+.nk-menu .jr.done {
+  color: var(--c2);
+}
+.nk-menu .jr.done .tt {
+  text-decoration: line-through;
+  text-decoration-color: rgba(138, 190, 178, 0.45);
+}
+.nk-menu .legend {
+  position: absolute;
+  right: 64px;
+  bottom: 44px;
+  display: flex;
+  gap: 28px;
+}
+.nk-menu .legend span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--y2);
+}
+.nk-menu .legend .nk-key {
+  font-size: 11px;
+  height: 22px;
+}
+.nk-menu .foot {
+  position: absolute;
+  left: 58px;
+  bottom: 42px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.nk-menu .foot .logo-s {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--y);
+  line-height: 1.15;
+  padding-right: 12px;
+  border-right: 1px solid rgba(223, 190, 127, 0.35);
+}
+.nk-menu .foot .tiny {
+  font-family: var(--serif);
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(245, 239, 226, 0.55);
+  max-width: 440px;
+}
+
+/* ===================== ANIMATIONS (温润水墨过渡动效) ===================== */
+@keyframes nkDistrict {
+  0% { opacity: 0; transform: translateY(10px) scale(0.98); filter: blur(4px); }
+  12% { opacity: 1; transform: none; filter: none; }
+  84% { opacity: 1; transform: none; filter: none; }
+  100% { opacity: 0; transform: translateY(-6px); filter: blur(2px); }
+}
+@keyframes nkGrow {
+  to { width: 140px; }
+}
+@keyframes nkToastIn {
+  0% { opacity: 0; transform: translateX(36px); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes nkToastOut {
+  to { opacity: 0; transform: translateX(28px); }
+}
+@keyframes nkFadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes nkBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+@keyframes nkFlash {
+  0% { opacity: 0.45; }
+  100% { opacity: 0; }
+}
+@keyframes nkLogoIn {
+  0% { opacity: 0; transform: translateY(14px); filter: blur(6px); }
+  100% { opacity: 1; transform: none; filter: blur(0); }
+}
+@keyframes nkMenuIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes nkPanelIn {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: none; }
+}
