@@ -43,46 +43,32 @@ export function populateFacades(sb, facades, L, layout) {
       }
     }
 
-    // ---- vertical blades
-    const nBlades = Math.max(0, Math.round((w / 6.5) * dense * rnd.range(0.7, 1.4)));
+    // ---- vertical blades (focused on 1F-2F street level, avoiding cluttered canyon walls)
+    const nBlades = Math.max(0, Math.round((w / 10.5) * dense * rnd.range(0.6, 1.1)));
     const slots = [];
-    for (let i = 0; i < nBlades; i++) slots.push(-w / 2 + 0.8 + (w - 1.6) * ((i + rnd.range(0.2, 0.8)) / Math.max(1, nBlades)));
-    // tall multi-storey blade (the big vertical signs that dominate Tokyo/Night City canyons)
-    if (d === 'avenue' && f.height > 20 && rnd() < 0.45) {
+    for (let i = 0; i < nBlades; i++) slots.push(-w / 2 + 1.0 + (w - 2.0) * ((i + rnd.range(0.25, 0.75)) / Math.max(1, nBlades)));
+    // occasional landmark vertical banner on tall avenue corners
+    if (d === 'avenue' && f.height > 22 && rnd() < 0.2) {
       const a = (rnd() < 0.5 ? -1 : 1) * (w / 2 - 0.9);
-      const y0 = base + rnd.range(8, 13);
+      const y0 = base + rnd.range(6.5, 9.5);
       const room = top - y0 - 1;
-      if (room > 6) sb.blade(f, a, y0, rnd() < 0.7 ? pickNeonV() : pickBoxV(), { depth: rnd.range(1.5, 2.3), maxH: Math.min(room, rnd.range(8, 15)), thick: 0.45, edge: rnd() < 0.6, importance: 1.5 });
+      if (room > 6) sb.blade(f, a, y0, rnd() < 0.65 ? pickNeonV() : pickBoxV(), { depth: rnd.range(1.2, 1.8), maxH: Math.min(room, rnd.range(6, 10)), thick: 0.4, edge: rnd() < 0.5, importance: 1.3 });
     }
     for (const a of slots) {
-      const y0 = base + (d === 'alley' ? rnd.range(3.2, 4.5) : rnd.range(4.2, 6.5));
+      const y0 = base + (d === 'alley' ? rnd.range(3.0, 4.2) : rnd.range(3.8, 5.2));
       const room = top - y0 - 0.8;
       if (room < 1.8) continue;
-      const kind = rnd();
-      if (kind < 0.16 && room > 3) {
-        sb.tenantStack(f, a, y0, Math.min(Math.floor(room / 0.55), rnd.int(4, 12)));
-      } else {
-        const ds = kind < 0.6 ? pickNeonV() : pickBoxV();
-        sb.blade(f, a, y0, ds, { maxH: Math.min(room, d === 'alley' ? 4.5 : rnd.range(3.5, 9)), depth: d === 'alley' ? rnd.range(0.55, 0.85) : undefined, lightMul });
-      }
+      const ds = rnd() < 0.55 ? pickNeonV() : pickBoxV();
+      sb.blade(f, a, y0, ds, { maxH: Math.min(room, d === 'alley' ? 4.0 : rnd.range(3.2, 6.2)), depth: d === 'alley' ? rnd.range(0.55, 0.85) : undefined, lightMul });
     }
 
-    // ---- upper floor wall signs (neon words, light boxes, posters on lower walls)
+    // ---- 2F plaque / traditional lightbox only (keep 3F+ upper walls clean; no cyber icons or purple screens)
     const floors = Math.floor(f.height / f.floorHeight);
-    let upperBlade = 0;
-    for (let k = 2; k < floors - 1; k++) {
-      if (rnd() > 0.32 * dense) continue;
-      const yc = base + k * f.floorHeight + f.floorHeight * 0.5;
-      const r = rnd();
-      const a = rnd.range(-0.3, 0.3) * w;
-      if (r < 0.25 && upperBlade < 2 && top - (yc - 1) > 4) {
-        // projecting blade on an upper floor (signs stacked at many heights, like Kabukicho)
-        upperBlade++;
-        sb.blade(f, (rnd() < 0.5 ? -1 : 1) * rnd.range(0.2, 0.45) * w, yc - 1, rnd() < 0.6 ? pickNeonV() : pickBoxV(), { maxH: Math.min(top - yc, rnd.range(3, 7)), lightMul: lightMul * 0.7, importance: 0.8 });
-      } else if (r < 0.5) sb.flat(f, a, yc, rnd.pick(lib.neonH), { width: rnd.range(2.5, Math.min(7, w * 0.8)), maxH: 2.0, depth: 0.1 });
-      else if (r < 0.65) sb.flat(f, a, yc, rnd.pick(lib.neonIcon), { width: rnd.range(1.4, 2.4), depth: 0.1 });
-      else if (r < 0.85) sb.flat(f, a, yc, rnd.pick(lib.boxSq), { width: rnd.range(1.6, 2.6) });
-      else if (lib.screens.length && w > 8) sb.flat(f, a, yc + 1.5, rnd.pick(lib.screens), { width: rnd.range(4, 6.5), depth: 0.3, inten: 2.2, housing: [[0.02, 0.02, 0.02], [0.5, 0.4]], lightColor: [0.8, 0.5, 1] });
+    if (floors > 3 && rnd() < 0.22 * dense) {
+      const yc = base + 2 * f.floorHeight + f.floorHeight * 0.45;
+      const a = rnd.range(-0.25, 0.25) * w;
+      if (rnd() < 0.45) sb.flat(f, a, yc, rnd.pick(lib.neonH), { width: rnd.range(2.4, Math.min(5.5, w * 0.65)), maxH: 1.5, depth: 0.1 });
+      else sb.flat(f, a, yc, rnd.pick(lib.boxSq), { width: rnd.range(1.5, 2.2) });
     }
 
     // ---- posters on ground floor walls (painted)

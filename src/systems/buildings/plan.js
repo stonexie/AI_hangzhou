@@ -7,18 +7,18 @@ const EPS = 0.05;
 
 export const STYLES = {
   // layer = wall texture atlas layer, kind = window layout (0 punched, 1 ribbon, 2 curtain wall)
-  tile:      { layer: 0, texScale: 0.9, kind: 0, bay: [2.4, 3.4], ww: [0.5, 0.72], wh: [0.48, 0.6], balcony: 0.5, ac: 0.7, frame: 'alu' },
-  whitetile: { layer: 6, texScale: 1.2, kind: 0, bay: [2.6, 3.6], ww: [0.55, 0.8], wh: [0.5, 0.62], balcony: 0.75, ac: 0.8, frame: 'alu' },
-  concrete:  { layer: 1, texScale: 4.0, kind: 0, bay: [2.8, 4.2], ww: [0.45, 0.7], wh: [0.45, 0.58], balcony: 0.3, ac: 0.6, frame: 'dark' },
-  ribbon:    { layer: 1, texScale: 4.0, kind: 1, bay: [1.6, 2.4], ww: [1, 1], wh: [0.5, 0.62], balcony: 0, ac: 0.3, frame: 'dark' },
-  render:    { layer: 3, texScale: 3.0, kind: 0, bay: [2.2, 3.2], ww: [0.4, 0.6], wh: [0.42, 0.55], balcony: 0.25, ac: 0.9, frame: 'alu' },
-  corrugated:{ layer: 2, texScale: 2.5, kind: 0, bay: [2.4, 3.4], ww: [0.35, 0.55], wh: [0.4, 0.5], balcony: 0, ac: 0.8, frame: 'rust' },
-  metal:     { layer: 4, texScale: 3.6, kind: 1, bay: [1.8, 2.6], ww: [1, 1], wh: [0.55, 0.7], balcony: 0, ac: 0.2, frame: 'dark' },
-  brick:     { layer: 5, texScale: 1.6, kind: 0, bay: [2.4, 3.2], ww: [0.45, 0.62], wh: [0.48, 0.58], balcony: 0.35, ac: 0.7, frame: 'dark' },
+  tile:      { layer: 0, texScale: 0.9, kind: 0, bay: [2.4, 3.4], ww: [0.5, 0.72], wh: [0.48, 0.6], balcony: 0.45, ac: 0.25, frame: 'alu' },
+  whitetile: { layer: 6, texScale: 1.2, kind: 0, bay: [2.6, 3.6], ww: [0.55, 0.8], wh: [0.5, 0.62], balcony: 0.6, ac: 0.25, frame: 'alu' },
+  concrete:  { layer: 1, texScale: 4.0, kind: 0, bay: [2.8, 4.2], ww: [0.45, 0.7], wh: [0.45, 0.58], balcony: 0.25, ac: 0.2, frame: 'dark' },
+  ribbon:    { layer: 1, texScale: 4.0, kind: 1, bay: [1.6, 2.4], ww: [1, 1], wh: [0.5, 0.62], balcony: 0, ac: 0.1, frame: 'dark' },
+  render:    { layer: 3, texScale: 3.0, kind: 0, bay: [2.2, 3.2], ww: [0.4, 0.6], wh: [0.42, 0.55], balcony: 0.2, ac: 0.3, frame: 'alu' },
+  corrugated:{ layer: 2, texScale: 2.5, kind: 0, bay: [2.4, 3.4], ww: [0.35, 0.55], wh: [0.4, 0.5], balcony: 0, ac: 0.25, frame: 'rust' },
+  metal:     { layer: 4, texScale: 3.6, kind: 1, bay: [1.8, 2.6], ww: [1, 1], wh: [0.55, 0.7], balcony: 0, ac: 0.1, frame: 'dark' },
+  brick:     { layer: 5, texScale: 1.6, kind: 0, bay: [2.4, 3.2], ww: [0.45, 0.62], wh: [0.48, 0.58], balcony: 0.3, ac: 0.25, frame: 'dark' },
   glass:     { layer: 4, texScale: 3.6, kind: 2, bay: [1.5, 1.8], ww: [1, 1], wh: [1, 1], balcony: 0, ac: 0.0, frame: 'dark' },
 };
 
-const FRONT_STYLES = [['tile', 3], ['whitetile', 2.5], ['concrete', 2], ['render', 2.5], ['brick', 1.5], ['metal', 1.2], ['ribbon', 1.2], ['corrugated', 0.8], ['glass', 0.5]];
+const FRONT_STYLES = [['tile', 3], ['whitetile', 2.8], ['concrete', 2], ['render', 2.8], ['brick', 1.8], ['metal', 1.2], ['ribbon', 1.2], ['corrugated', 0.15], ['glass', 0.5]];
 const TOWER_STYLES = [['glass', 3], ['metal', 2], ['ribbon', 2], ['concrete', 1.5], ['whitetile', 1.5], ['tile', 1]];
 
 export function buildPlan(L) {
