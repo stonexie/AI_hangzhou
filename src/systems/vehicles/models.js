@@ -267,6 +267,59 @@ function extract(gltf, type) {
     }
   }
 
+  // Upgrade all ground vehicles with high-detail exterior trim: side mirrors, roof LiDAR pod, shark-fin antenna & full-width cyber-Jiangnan LED tail bar
+  if (type !== 'av') {
+    if (!body.has('trim')) body.set('trim', []);
+    if (!body.has('chrome')) body.set('chrome', []);
+    if (!body.has('lights_tail')) body.set('lights_tail', []);
+    if (!body.has('lights_aux')) body.set('lights_aux', []);
+
+    const mirrorSpec = {
+      hero:  { x: 0.96, y: 0.92, z: -0.62, rearZ: 2.42, rearY: 0.72, rearW: 1.56, roofY: 1.28, roofZ: -0.32 },
+      taxi:  { x: 0.90, y: 1.02, z: -0.58, rearZ: 2.36, rearY: 0.84, rearW: 1.48, roofY: 1.50, roofZ: -0.52 },
+      sedan: { x: 0.90, y: 1.02, z: -0.58, rearZ: 2.36, rearY: 0.84, rearW: 1.48, roofY: 1.49, roofZ: -0.45 },
+      suv:   { x: 0.95, y: 1.14, z: -0.56, rearZ: 2.32, rearY: 0.98, rearW: 1.54, roofY: 1.69, roofZ: -0.42 },
+      kei:   { x: 0.78, y: 1.04, z: -0.48, rearZ: 1.70, rearY: 0.86, rearW: 1.32, roofY: 1.56, roofZ: -0.35 },
+      van:   { x: 0.98, y: 1.32, z: -1.65, rearZ: 2.98, rearY: 0.92, rearW: 1.62, roofY: 2.18, roofZ: -1.45 },
+    }[type];
+
+    if (mirrorSpec) {
+      // Sculpted aerodynamic side-view mirrors + chrome mirror glass
+      for (const sx of [-1, 1]) {
+        const stalk = new THREE.BoxGeometry(0.10, 0.03, 0.04);
+        stalk.translate(sx * (mirrorSpec.x - 0.03), mirrorSpec.y - 0.02, mirrorSpec.z);
+        body.get('trim').push(cleanGeom(stalk, null));
+        const cap = new THREE.BoxGeometry(0.14, 0.085, 0.10);
+        cap.translate(sx * (mirrorSpec.x + 0.04), mirrorSpec.y, mirrorSpec.z + 0.02);
+        body.get('trim').push(cleanGeom(cap, null));
+      }
+      // Continuous full-width horizontal matrix LED tail light bar (贯穿式尾灯带)
+      const tailBar = new THREE.BoxGeometry(mirrorSpec.rearW, 0.038, 0.03);
+      tailBar.translate(0, mirrorSpec.rearY, mirrorSpec.rearZ);
+      body.get('lights_tail').push(cleanGeom(tailBar, null));
+
+      // Sleek forward roof autonomous-driving LiDAR module (西子智驾激光雷达舱) on modern cars
+      if (type === 'hero' || type === 'sedan' || type === 'suv') {
+        const lidarPod = new THREE.BoxGeometry(0.28, 0.048, 0.18);
+        lidarPod.translate(0, mirrorSpec.roofY + 0.024, mirrorSpec.roofZ);
+        body.get('trim').push(cleanGeom(lidarPod, null));
+        const lidarLens = makeQuadGeo(0, mirrorSpec.roofY + 0.026, mirrorSpec.roofZ - 0.092, 0.22, 0.026, -1);
+        body.get('lights_aux').push(lidarLens);
+      }
+
+      // Illuminated Hangzhou Wulin Night Market cultural side livery panels on `van`
+      if (type === 'van') {
+        const leftPanel = new THREE.PlaneGeometry(3.1, 1.08);
+        leftPanel.rotateY(-Math.PI / 2);
+        leftPanel.translate(-0.965, 1.42, 0.58);
+        const rightPanel = new THREE.PlaneGeometry(3.1, 1.08);
+        rightPanel.rotateY(Math.PI / 2);
+        rightPanel.translate(0.965, 1.42, 0.58);
+        body.get('lights_aux').push(cleanGeom(leftPanel, null), cleanGeom(rightPanel, null));
+      }
+    }
+  }
+
   for (const wn of wheelNodes) {
     const m = new THREE.Matrix4().multiplyMatrices(FLIP, wn.matrixWorld);
     const pos = new THREE.Vector3(), quat = new THREE.Quaternion(), scl = new THREE.Vector3();

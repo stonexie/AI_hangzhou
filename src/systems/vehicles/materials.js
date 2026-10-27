@@ -5,7 +5,7 @@
 import * as THREE from 'three/webgpu';
 import {
   float, vec2, vec3, vec4, uniform, time, floor, fract, length, smoothstep, mix, clamp, abs, max, min, normalize, step, sin,
-  positionGeometry, normalGeometry, normalView, cameraViewMatrix, instanceColor, dot, pow, positionWorld, cameraPosition, texture, uv,
+  positionGeometry, normalGeometry, normalWorld, normalView, cameraViewMatrix, instanceColor, dot, pow, positionWorld, cameraPosition, texture, uv,
 } from 'three/tsl';
 import { hash21, hash22, hash23, vnoise } from '../../materials/noise.js';
 import { wetUniforms } from '../../materials/wet.js';
@@ -188,24 +188,28 @@ function perturbView(offsetGeom, amount) {
 }
 
 // ---------------------------------------------------------------------------------------------- materials
-export function makePaint({ metalness = 0.55, roughness = 0.34, flake = 1.0, coatRough = 0.035, solid = false } = {}, paintNode = null) {
+export function makePaint({ metalness = 0.68, roughness = 0.22, flake = 1.0, coatRough = 0.022, solid = false } = {}, paintNode = null) {
   const m = new THREE.MeshPhysicalNodeMaterial();
   const p = positionGeometry;
-  const fc = p.mul(520.0);
+  const fc = p.mul(640.0);
   const fh = hash23(floor(vec2(fc.x.add(fc.z.mul(0.71)), fc.y.add(fc.z.mul(0.43)))));
-  const flakeB = fh.x.sub(0.5).mul(0.22 * flake).add(1.0);
-  const grime = smoothstep(0.55, 0.12, p.y).mul(vnoise(vec2(p.x.add(p.z), p.y).mul(6.0)).mul(0.6).add(0.4));
+  const flakeB = fh.x.sub(0.5).mul(0.26 * flake).add(1.0);
+  const grime = smoothstep(0.48, 0.10, p.y).mul(vnoise(vec2(p.x.add(p.z), p.y).mul(6.0)).mul(0.5).add(0.35));
   const rain = rainNodes({});
-  m.colorNode = vec3(flakeB).mul(float(1).sub(grime.mul(0.35)));
-  if (paintNode) m.colorNode = m.colorNode.mul(paintNode);
-  m.metalnessNode = float(solid ? 0.08 : metalness).mul(float(1).sub(grime.mul(0.4)));
-  m.roughnessNode = float(Math.max(roughness, 0.48)).add(grime.mul(0.2)).add(fh.y.sub(0.5).mul(0.08 * flake));
-  const flakeN = vec3(fh.x.sub(0.5), fh.y.sub(0.5), fh.z.sub(0.5)).mul(0.18 * flake);
-  m.normalNode = perturbView(flakeN.add(rain.offset.mul(0.8)), 1.0);
+  // Subtle grazing-angle metallic pearl coat highlight (珠光清漆折光)
+  const viewDir = normalize(cameraPosition.sub(positionWorld));
+  const fresnel = float(1.0).sub(clamp(abs(dot(normalWorld, viewDir)), 0.0, 1.0)).pow(3.0);
+  let baseCol = vec3(flakeB).mul(float(1).sub(grime.mul(0.28)));
+  if (paintNode) baseCol = baseCol.mul(paintNode);
+  m.colorNode = baseCol.add(baseCol.mul(fresnel.mul(solid ? 0.12 : 0.28)));
+  m.metalnessNode = float(solid ? 0.22 : metalness).mul(float(1).sub(grime.mul(0.3)));
+  m.roughnessNode = float(Math.max(roughness, 0.20)).add(grime.mul(0.16)).add(fh.y.sub(0.5).mul(0.06 * flake));
+  const flakeN = vec3(fh.x.sub(0.5), fh.y.sub(0.5), fh.z.sub(0.5)).mul(0.16 * flake);
+  m.normalNode = perturbView(flakeN.add(rain.offset.mul(0.75)), 1.0);
   m.clearcoat = 1.0;
-  m.clearcoatRoughnessNode = mix(float(coatRough), float(0.012), rain.mask).add(grime.mul(0.2));
+  m.clearcoatRoughnessNode = mix(float(coatRough), float(0.008), rain.mask).add(grime.mul(0.14));
   m.clearcoatNormalNode = perturbView(rain.offset, 1.1);
-  m.envMapIntensity = 1.0;
+  m.envMapIntensity = 1.35;
   m.name = 'veh_paint';
   return m;
 }
@@ -287,6 +291,15 @@ export function makeAux(kind, L = instanceColor) {
     const pulse = sin(time.mul(5.0)).mul(0.2).add(0.8);
     m.colorNode = vec3(0.05);
     m.emissiveNode = vec3(0.15, 0.85, 0.55).mul(L.y.mul(3.5).mul(pulse));
+  } else if (kind === 'van') {
+    if (!_texCache.has('van_livery')) {
+      const vt = new THREE.TextureLoader().load('/textures/signage/van_livery.png');
+      vt.colorSpace = THREE.SRGBColorSpace;
+      _texCache.set('van_livery', vt);
+    }
+    const samp = texture(_texCache.get('van_livery'), uv());
+    m.colorNode = samp.rgb;
+    m.emissiveNode = samp.rgb.mul(max(L.y, float(0.65)).mul(0.75));
   } else {
     m.colorNode = vec3(0.05);
     m.emissiveNode = vec3(0.2, 0.7, 1.0).mul(L.y.mul(1.8));

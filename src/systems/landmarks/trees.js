@@ -47,21 +47,21 @@ export async function buildTrees(ctx, tex, root) {
     const t = texture(tex.blossom, u0);
     const u1 = attribute('uv1', 'vec2'); // x: random tint, y: outerness 0..1
     const pw = positionWorld;
-    // deeper pink to near white variation per card, inner canopy darker (self-shadowing)
-    const tint = mix(vec3(1.0, 0.58, 0.74), vec3(1.0, 0.85, 0.9), u1.x);
-    const ao = mix(float(0.18), float(1.0), smoothstep(0.2, 0.95, u1.y));
+    // West Lake "柳浪闻莺 & 满陇桂雨" (Spring Willow Emerald & Golden Osmanthus canopy variation)
+    const tint = mix(vec3(0.28, 0.76, 0.44), vec3(1.0, 0.84, 0.38), smoothstep(0.38, 0.85, u1.x));
+    const ao = mix(float(0.22), float(1.0), smoothstep(0.2, 0.95, u1.y));
     const base = t.rgb.mul(tint).mul(ao);
     blossom.colorNode = base;
     // fade cards seen edge-on (avoids stretched streaks)
     const facing = abs(dot(normalFlat, normalize(positionView)));
     blossom.opacityNode = t.a.mul(smoothstep(0.08, 0.38, facing).mul(0.6).add(0.4)).add(t.a.mul(0.0));
-    blossom.roughnessNode = float(0.55);
+    blossom.roughnessNode = float(0.48);
     blossom.metalnessNode = float(0);
-    // translucency / bounce glow: warm lantern light from below the river side + pink neon city glow
+    // translucency / bounce glow: warm lantern light from below the river side + golden osmanthus city glow
     const lowGlow = smoothstep(9.0, 2.5, pw.y);
     const riverSide = smoothstep(P.xMin, P.xMax + 1, pw.x);
-    const lantern = vec3(1.0, 0.55, 0.42).mul(lowGlow.mul(riverSide.mul(0.6).add(0.4))).mul(0.55);
-    const city = vec3(0.9, 0.35, 0.65).mul(0.12);
+    const lantern = vec3(1.0, 0.68, 0.36).mul(lowGlow.mul(riverSide.mul(0.6).add(0.4))).mul(0.58);
+    const city = vec3(0.85, 0.65, 0.28).mul(0.14);
     blossom.emissiveNode = base.mul(lantern.add(city)).mul(ao);
   }
 
@@ -125,12 +125,12 @@ function petalMaterial(tex, kind) {
   const u0 = uv();
   const cu = vec2(fract(cell.div(4)), floor(cell.div(4)).div(4));
   const t = texture(tex.petals, u0.mul(0.25).add(vec2(cu.x, float(0.75).sub(cu.y))));
-  const base = t.rgb.mul(vec3(1.0, 0.86, 0.9));
-  m.colorNode = kind === 'ground' ? base.mul(0.75) : base;
+  const base = t.rgb.mul(vec3(1.0, 0.85, 0.42));
+  m.colorNode = kind === 'ground' ? base.mul(0.78) : base;
   m.opacityNode = t.a;
-  m.roughnessNode = float(kind === 'falling' ? 0.5 : 0.25);
+  m.roughnessNode = float(kind === 'falling' ? 0.45 : 0.22);
   m.metalnessNode = float(0);
-  m.emissiveNode = base.mul(vec3(0.9, 0.45, 0.45)).mul(kind === 'falling' ? 0.35 : 0.08);
+  m.emissiveNode = base.mul(vec3(0.95, 0.68, 0.22)).mul(kind === 'falling' ? 0.38 : 0.10);
   return m;
 }
 
