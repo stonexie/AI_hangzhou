@@ -57,20 +57,20 @@ export class Population {
 
   pickLook(r) {
     const preferred = [
-      { sex: 'female', outfit: 'f_casual' },   // 白T恤配复古牛仔裤
+      { sex: 'female', outfit: 'f_casual' },   // 现代修身针织T恤配牛仔裤（分指高精五官）
       { sex: 'female', outfit: 'f_casual' },
-      { sex: 'female', outfit: 'f_hoodie' },   // 燕麦色/雾霾蓝连帽卫衣配休闲裤
-      { sex: 'female', outfit: 'f_hoodie' },
-      { sex: 'female', outfit: 'f_techwear' }, // 冰川白/浅粉城市防晒冲锋衣
-      { sex: 'female', outfit: 'f_trench' },   // 奶茶色/卡其色休闲风衣
-      { sex: 'female', outfit: 'f_raincoat' }, // 休闲短款外套配半身裙
-      { sex: 'male', outfit: 'm_hoodie' },     // 高级灰/米白连帽卫衣配运动裤
-      { sex: 'male', outfit: 'm_hoodie' },
-      { sex: 'male', outfit: 'm_jacket' },     // 丹宁/工装休闲夹克配牛仔裤
+      { sex: 'female', outfit: 'f_hoodie' },   // 燕麦色/雾霾蓝连帽卫衣配休闲裤（分指高精五官）
+      { sex: 'female', outfit: 'f_techwear' }, // 冰川白/浅粉城市防晒冲锋衣（分指高精五官）
+      { sex: 'female', outfit: 'f_raincoat' }, // 江南丝绸感短外套配半身裙（分指高精五官）
+      { sex: 'female', outfit: 'f_elegant' },  // 丹青约 3D 定制：宋制汉服少女
+      { sex: 'female', outfit: 'f_trench' },   // 丹青约 3D 定制：现代燕麦风衣女
+      { sex: 'male', outfit: 'm_hoodie' },     // 高级灰/米白连帽卫衣配运动裤（分指高精五官）
+      { sex: 'male', outfit: 'm_jacket' },     // 丹宁/工装休闲夹克配牛仔裤（分指高精五官）
       { sex: 'male', outfit: 'm_jacket' },
-      { sex: 'male', outfit: 'm_techwear' },   // 山系户外拼色冲锋衣
-      { sex: 'male', outfit: 'm_trench' },     // 卡其/驼色中长款休闲外套
-      { sex: 'male', outfit: 'm_raincoat' },   // 城市防风连帽夹克
+      { sex: 'male', outfit: 'm_techwear' },   // 山系户外拼色冲锋衣（分指高精五官）
+      { sex: 'male', outfit: 'm_raincoat' },   // 城市防风连帽夹克（分指高精五官）
+      { sex: 'male', outfit: 'm_suit' },       // 丹青约 3D 定制：新中式立领盘扣男
+      { sex: 'male', outfit: 'm_trench' },     // 丹青约 3D 定制：都市山系工装男
     ];
     const list = this.lib.outfitList;
     let pick = preferred[Math.floor(r() * preferred.length)];
@@ -210,14 +210,14 @@ export class Population {
       }
     }
 
-    // Spawn dedicated night-market stall visitors & spawn-front showcase NPCs (all 4 AI 3D PBR archetypes)
+    // Spawn dedicated night-market stall visitors & spawn-front showcase NPCs (combining AI PBR & articulated outfits)
     const stallVisitors = [
-      { x: -6.7, z: 21.8, yaw:  Math.PI * 0.22, action: 'photo', outfit: { sex: 'female', outfit: 'f_trench', tint: 0, hairTint: 0 } },   // 宋制汉服少女（出生点左前方）
-      { x: -6.9, z: 19.6, yaw:  Math.PI * 0.12, action: 'chat', outfit: { sex: 'male',   outfit: 'm_jacket', tint: 0, hairTint: 0 } },   // 新中式立领盘扣男（出生点左前方）
-      { x:  6.7, z: 21.2, yaw: -Math.PI * 0.25, action: 'drink', outfit: { sex: 'female', outfit: 'f_casual', tint: 1, hairTint: 1 } },   // 现代燕麦风衣女（出生点右前方）
-      { x:  6.9, z: 19.0, yaw: -Math.PI * 0.15, action: 'look_around', outfit: { sex: 'male',   outfit: 'm_techwear', tint: 1, hairTint: 0 } }, // 都市山系冲锋衣男（出生点右前方）
-      { x: -7.1, z: 12.2, yaw: -Math.PI * 0.55, action: 'eat', outfit: { sex: 'female', outfit: 'f_trench', tint: 2, hairTint: 1 } },   // 面摊前吃面的汉服顾客
-      { x: -7.3, z: 10.6, yaw: -Math.PI * 0.35, action: 'eat', outfit: { sex: 'male',   outfit: 'm_jacket', tint: 1, hairTint: 0 } },   // 面摊前吃面的国潮顾客
+      { x: -6.7, z: 21.8, yaw:  Math.PI * 0.22, action: 'photo', outfit: { sex: 'female', outfit: 'f_elegant', tint: 0, hairTint: 0 } },  // 宋制汉服少女（出生点左前方·举手机拍照）
+      { x: -6.9, z: 19.6, yaw:  Math.PI * 0.12, action: 'chat', outfit: { sex: 'male',   outfit: 'm_suit',    tint: 0, hairTint: 0 } },  // 新中式立领盘扣男（出生点左前方·聊天比划）
+      { x:  6.7, z: 21.2, yaw: -Math.PI * 0.25, action: 'drink', outfit: { sex: 'female', outfit: 'f_trench',  tint: 0, hairTint: 1 } },  // 现代燕麦风衣女（出生点右前方·喝茶）
+      { x:  6.9, z: 19.0, yaw: -Math.PI * 0.15, action: 'wave_hello', outfit: { sex: 'male', outfit: 'm_trench', tint: 0, hairTint: 0 } }, // 都市山系工装男（出生点右前方·招手）
+      { x: -7.1, z: 12.2, yaw: -Math.PI * 0.55, action: 'eat', outfit: { sex: 'female', outfit: 'f_elegant', tint: 1, hairTint: 1 } },   // 面摊前吃面的汉服顾客
+      { x: -7.3, z: 10.6, yaw: -Math.PI * 0.35, action: 'eat', outfit: { sex: 'male',   outfit: 'm_jacket',  tint: 1, hairTint: 0 } },   // 面摊前吃面的顾客
       { x:  7.1, z: -5.5, yaw:  Math.PI * 0.52, action: 'check_watch', outfit: { sex: 'female', outfit: 'f_casual', tint: 3, hairTint: 2 } }, // 看表的通勤女
       { x: -7.1, z: -37.5, yaw: -Math.PI * 0.48, action: 'adjust_collar', outfit: { sex: 'female', outfit: 'f_hoodie', tint: 4, hairTint: 0 } }, // 整理衣领的路人
     ];

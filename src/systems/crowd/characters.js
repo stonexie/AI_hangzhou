@@ -417,9 +417,9 @@ export class CharacterLibrary {
         }
       }
       const entry = { sex, gltf, meta, clips, templates: {}, lodTemplates: {}, outfits: Object.keys(meta.outfits) };
-      // 程序化日常动作（哈欠/伸懒腰/张望/聊天/喝水/吃面/拍照/招手/看表/下蹲/整理衣领）
+      // 基于 54 通道动捕基底叠加的日常动作（哈欠/伸懒腰/张望/聊天/喝水/吃面/拍照/招手/看表/俯身/整理衣领）
       try {
-        const built = buildActionClips(gltf.scene);
+        const built = buildActionClips(gltf.scene, clips);
         for (const [name, clip] of Object.entries(built.clips)) {
           entry.clips[name] = clip;
           entry.meta.clips[name] = { period: built.durations[name], speed: 0, frames: Math.round(built.durations[name] * 20) };
@@ -785,11 +785,18 @@ export class CharacterLibrary {
       console.warn('[crowd] applyHanfuToEntry warning:', e);
     }
 
+    // Map the 4 custom AI PBR models onto 4 dedicated signature outfits while preserving the 8 articulated
+    // multi-material outfits (separate eyes/lashes/hair cards/articulated fingers + 1K Song brocade/knit weaves)
+    const AI_OUTFIT_MAP = {
+      f_elegant: 'ai_f_hanfu',   // 宋制汉服少女
+      f_trench:  'ai_f_modern',  // 现代燕麦风衣女
+      m_suit:    'ai_m_guochao', // 新中式立领盘扣男
+      m_trench:  'ai_m_casual',  // 都市山系工装男
+    };
+
     for (const outfit of entry.outfits) {
-      const aiKey = entry.sex === 'female'
-        ? (['f_trench', 'f_elegant', 'f_raincoat'].includes(outfit) ? 'ai_f_hanfu' : 'ai_f_modern')
-        : (['m_jacket', 'm_trench', 'm_suit'].includes(outfit) ? 'ai_m_guochao' : 'ai_m_casual');
-      const aiDef = this.aiModels?.[aiKey];
+      const aiKey = AI_OUTFIT_MAP[outfit] || null;
+      const aiDef = aiKey ? this.aiModels?.[aiKey] : null;
       const grp = byName['outfit_' + outfit];
       if (aiDef && grp) {
         const sms = [];
@@ -903,32 +910,71 @@ export class CharacterLibrary {
         });
       },
       current: null,
+      prevAction: null,
+      fadeElapsed: 0,
+      fadeDur: 0,
       clipInfo: entry.meta.clips,
       setAccessory(umbrella, phone) {
         for (const k of ACCESSORIES) for (const m of acc[k] || []) m.visible = false;
         if (umbrella) for (const m of acc['umbrella_' + umbrella] || []) m.visible = true;
         if (phone) for (const m of acc.phone || []) m.visible = true;
       },
-      play(name, fade = 0) {
+      play(name, fade = 0.35) {
         const a = actions[name];
         if (!a) return;
-        if (ch.current === a && a.enabled && a.getEffectiveWeight() > 0.99) return;
-        const prevTimeRatio = ch.current ? (ch.current.time / Math.max(1e-4, ch.current.getClip().duration)) : 0;
+        if (ch.current === a && a.enabled && !ch.prevAction && a.getEffectiveWeight() > 0.99) return;
+        const prev = ch.current;
+        const prevTimeRatio = prev ? (prev.time / Math.max(1e-4, prev.getClip().duration)) : 0;
         for (const x of Object.values(actions)) {
-          if (x === a) {
-            x.enabled = true;
-            x.setEffectiveTimeScale(1);
-            x.setEffectiveWeight(1);
-            x.play();
-          } else {
+          if (x !== a && x !== prev) {
             x.enabled = false;
             x.setEffectiveWeight(0);
           }
         }
-        a.time = prevTimeRatio * a.getClip().duration;
+        a.enabled = true;
+        a.setEffectiveTimeScale(1);
+        a.play();
+        // Sync gait cycle phase when transitioning between two locomotion clips
+        const isLocomotion = name.includes('walk') || name === 'cover_run';
+        const wasLocomotion = prev && (prev.getClip().name.includes('walk') || prev.getClip().name === 'cover_run');
+        a.time = (isLocomotion && wasLocomotion) ? prevTimeRatio * a.getClip().duration : 0;
+
+        if (prev && prev !== a && fade > 0.01) {
+          prev.enabled = true;
+          prev.setEffectiveWeight(1);
+          a.setEffectiveWeight(0);
+          ch.prevAction = prev;
+          ch.fadeElapsed = 0;
+          ch.fadeDur = fade;
+        } else {
+          if (prev && prev !== a) {
+            prev.enabled = false;
+            prev.setEffectiveWeight(0);
+          }
+          a.setEffectiveWeight(1);
+          ch.prevAction = null;
+          ch.fadeElapsed = 0;
+          ch.fadeDur = 0;
+        }
         ch.current = a;
       },
+      updateBlend(dt) {
+        if (ch.prevAction && ch.fadeDur > 0) {
+          ch.fadeElapsed += dt;
+          const u = Math.min(1, ch.fadeElapsed / ch.fadeDur);
+          const w = u * u * (3 - 2 * u);
+          if (ch.current) ch.current.setEffectiveWeight(w);
+          ch.prevAction.setEffectiveWeight(1 - w);
+          if (u >= 1) {
+            ch.prevAction.enabled = false;
+            ch.prevAction.setEffectiveWeight(0);
+            ch.prevAction = null;
+            ch.fadeDur = 0;
+          }
+        }
+      },
       update(dt) {
+        ch.updateBlend(dt);
         mixer.update(dt);
       },
     };

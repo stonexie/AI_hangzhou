@@ -228,11 +228,15 @@ export default {
         ch.lastShowPhone = showPhone;
       }
 
-      if (ch.current?.getClip().name !== ag.clip) ch.play(ag.clip, 0);
+      if (ch.current?.getClip().name !== ag.clip) ch.play(ag.clip, 0.35);
+      ch.updateBlend?.(dt);
       // Lock animation phase directly to ground displacement every frame so feet never slide
       const cur = ch.current;
       if (cur) {
         cur.time = (ag.phase ?? 0) * cur.getClip().duration;
+      }
+      if (ch.prevAction) {
+        ch.prevAction.time = (ch.prevAction.time + dt) % Math.max(1e-4, ch.prevAction.getClip().duration);
       }
       ch.mixer.timeScale = 1;
       ch.mixer.update(0);
