@@ -482,27 +482,28 @@ function ramenShop() {
   return { channels: chs, loop: true };
 }
 
-// Neon sign buzz (mono, positional): 100 Hz rectified buzz with rich harmonics + gas-discharge fizz.
+// Neon sign buzz (mono, positional): softened 100 Hz buzz with reduced harmonics & gas fizz so it reads as
+// distant electrical hum instead of a piercing tone.
 function neonHum(seed, bright) {
   const rng = mulberry32(seed);
   const n = N(2.0); // multiple of 1/50 s → harmonics of 50 Hz loop perfectly
   const out = new Float32Array(n);
   const base = bright ? 100 : 50;
-  const K = bright ? 34 : 14;
+  const K = bright ? 16 : 9;
   for (let k = 1; k <= K; k++) {
     const f = base * k;
-    let a = 1 / Math.pow(k, bright ? 1.0 : 1.5) * (0.5 + rng());
-    if (!bright && (k === 2 || k === 4)) a *= 2.5;
+    let a = 1 / Math.pow(k, bright ? 1.5 : 1.9) * (0.5 + rng() * 0.5);
+    if (!bright && (k === 2 || k === 4)) a *= 2.0;
     const ph = rng() * 2 * Math.PI;
     const w = (2 * Math.PI * f) / SR;
     for (let i = 0; i < n; i++) out[i] += Math.sin(w * i + ph) * a;
   }
   if (bright) {
-    const fz = chainPeriodic(white(n, rng), [['highpass', 2500, 0.7], ['lowpass', 9000, 0.7]]);
-    for (let i = 0; i < n; i++) out[i] += fz[i] * Math.pow(Math.abs(Math.sin((2 * Math.PI * 50 * i) / SR)), 6) * 1.2;
+    const fz = chainPeriodic(white(n, rng), [['highpass', 2500, 0.7], ['lowpass', 4500, 0.7]]);
+    for (let i = 0; i < n; i++) out[i] += fz[i] * Math.pow(Math.abs(Math.sin((2 * Math.PI * 50 * i) / SR)), 6) * 0.3;
   }
-  const chs = [chainPeriodic(out, [['highpass', 45, 0.7], ['lowpass', bright ? 7000 : 1200, 0.7]])];
-  normalizeRms(chs, LOOP_RMS);
+  const chs = [chainPeriodic(out, [['highpass', 45, 0.7], ['lowpass', bright ? 4200 : 1100, 0.7]])];
+  normalizeRms(chs, LOOP_RMS * 0.6);
   return { channels: chs, loop: true };
 }
 
@@ -715,117 +716,130 @@ function tireHiss() {
 }
 
 // ------------------------------------------------------------------ MUSIC
-// Dark-ambient synthwave bed: 48 s loop at 80 BPM. Wide detuned-saw pad through a slowly breathing low-pass,
-// pulsing sub bass, sparse glassy arpeggio with baked ping-pong echoes, high shimmer.
+// Jiangnan adaptive score: warm pentatonic guzheng plucks, soft pad bed and a gentle sub drone.
+// Two variants (lively night market / calm riverside) are cross-faded at runtime by the soundscape.
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
-function music() {
-  const rng = mulberry32(401);
-  const beat = 0.75, bar = beat * 4, Ls = bar * 16;
+
+// Karplus–Strong plucked string (guzheng / pipa feel)
+function pluckNote(freq, dur, rng, bright = 0.55) {
+  const n = N(dur);
+  const out = new Float32Array(n);
+  const d = Math.max(2, Math.round(SR / freq));
+  const buf = new Float32Array(d);
+  for (let i = 0; i < d; i++) buf[i] = rng() * 2 - 1;
+  let idx = 0;
+  const damp = 0.9975 - 0.0025 * (1 - bright);
+  for (let i = 0; i < n; i++) {
+    const a = buf[idx];
+    const b = buf[(idx + 1) % d];
+    buf[idx] = (a + b) * 0.5 * damp;
+    out[i] = a;
+    idx = (idx + 1) % d;
+  }
+  const bq = new Biquad('lowpass', 1800 + 2800 * bright, 0.75);
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    out[i] = bq.tick(out[i]) * Math.min(1, t / 0.004) * Math.exp(-t / (0.5 + 1.1 * (1 - bright)));
+  }
+  return out;
+}
+
+function musicJiangnan({ bpm = 90, bars = 8, bright = 0.55, density = 0.55, padGain = 0.42, bassGain = 0.26, seed = 401 }) {
+  const rng = mulberry32(seed);
+  const beat = 60 / bpm;
+  const barLen = beat * 4;
+  const Ls = barLen * bars;
   const n = N(Ls);
-  const tail = N(4);
-  const padL = new Float32Array(n + tail), padR = new Float32Array(n + tail);
-  const chords = [
-    { root: 38, notes: [50, 53, 57, 60, 64] }, // Dm9
-    { root: 34, notes: [46, 50, 53, 57, 60] }, // Bbmaj9
-    { root: 31, notes: [43, 46, 50, 53, 57] }, // Gm9
-    { root: 33, notes: [45, 50, 52, 55, 57] }, // A7sus4
-    { root: 38, notes: [50, 53, 57, 62, 64] },
-    { root: 34, notes: [46, 53, 57, 60, 62] },
-    { root: 31, notes: [43, 50, 53, 57, 58] },
-    { root: 33, notes: [45, 49, 52, 55, 57] }, // A7
-  ];
-  const cl = bar * 2;
-  chords.forEach((c, ci) => {
-    const s = N(ci * cl), len = N(cl + 3);
-    for (const m of c.notes) {
-      const f = mtof(m);
-      for (const [det, side] of [[-7, 0], [5, 0], [-4, 1], [8, 1]]) {
-        const tmp = new Float32Array(len);
-        addSaw(tmp, f * Math.pow(2, det / 1200), 0.05, 0, len, rng());
-        for (let i = 0; i < len; i++) {
-          const t = i / SR;
-          const a = Math.min(1, t / 1.8);
-          const r = t > cl ? Math.max(0, 1 - (t - cl) / 3) : 1;
-          tmp[i] *= a * a * r;
-        }
-        mix(side ? padR : padL, tmp, 1, s);
-      }
-    }
-  });
-  const pL = foldTail(padL, n), pR = foldTail(padR, n);
-  // breathing filter (periodic over the loop)
-  for (const p of [pL, pR]) {
-    const bq = new Biquad('lowpass', 800, 1.1);
-    for (let pass = 0; pass < 2; pass++) {
-      for (let i = 0; i < n; i++) {
-        if ((i & 127) === 0) bq.set('lowpass', 650 + 550 * (0.5 - 0.5 * Math.cos((2 * Math.PI * i) / N(24))), 1.1);
-        const y = bq.tick(p[i]);
-        if (pass) p[i] = y;
-      }
-    }
-  }
+  const tail = N(3.5);
   const L = new Float32Array(n + tail), R = new Float32Array(n + tail);
-  mix(L, pL, 1); mix(R, pR, 1);
-  // sub bass: 8th-note pulses with soft attack (pumping), triangle-ish
-  const e8 = beat / 2;
-  for (let k = 0; k < Ls / e8; k++) {
-    const t0 = k * e8;
-    const c = chords[Math.floor(t0 / cl) % chords.length];
-    const f = mtof(c.root + 12);
-    const len = N(e8 + 0.05);
-    const b = new Float32Array(len);
-    let ph = 0;
-    for (let i = 0; i < len; i++) {
-      const t = i / SR;
-      ph += f / SR;
-      const tri = 1 - 4 * Math.abs((ph % 1) - 0.5);
-      b[i] = (Math.sin(2 * Math.PI * ph) * 0.8 + tri * 0.2) * Math.min(1, t / 0.03) * Math.exp(-t / 0.22) * (k % 2 ? 0.75 : 1);
-    }
-    mix(L, b, 0.22, N(t0)); mix(R, b, 0.22, N(t0));
-  }
-  // glassy arp with ping-pong echoes (dotted 8th)
+
+  // D minor pentatonic (D F G A C) — the classic Jiangnan colour
+  const PENTA = [0, 3, 5, 7, 10];
+  const ROOTS = [0, 3, 5, 7]; // Dm · F · G · Am
+  const chordAt = (barIdx) => ROOTS[Math.floor(barIdx / 2) % ROOTS.length];
+
+  // --- guzheng arpeggio (16th notes, humanised velocity, sparse)
   const s16 = beat / 4;
-  const pat = [0, 2, 4, 1, 3, 4, 2, 0];
+  const ARP = [0, 2, 4, 7, 4, 2];
   for (let k = 0; k < Ls / s16; k++) {
-    if (rng() < 0.42) continue; // sparse, human
+    if (rng() > density) continue;
     const t0 = k * s16;
-    const ci = Math.floor(t0 / cl) % chords.length;
-    const c = chords[ci];
-    const m = c.notes[pat[k % pat.length]] + 24;
-    const f = mtof(m);
-    const len = N(0.5);
-    const b = new Float32Array(len);
-    for (let i = 0; i < len; i++) {
-      const t = i / SR;
-      b[i] = (Math.sin(2 * Math.PI * f * t) + 0.25 * Math.sin(4 * Math.PI * f * t + 1) + 0.08 * Math.sin(6 * Math.PI * f * t)) * Math.min(1, t / 0.004) * Math.exp(-t / 0.13);
-    }
-    const g = 0.05 * (0.6 + 0.4 * rng()) * (ci >= 4 ? 1.0 : 0.6);
-    for (let e = 0; e < 6; e++) {
-      const dst = e % 2 ? R : L;
-      const t = t0 + e * beat * 0.75;
-      const tgt = e === 0 ? [L, R] : [dst];
-      for (const d of tgt) mixWrap(d, b, g * Math.pow(0.5, e) * (e === 0 ? 0.7 : 1), N(t));
-    }
+    const barIdx = Math.floor(t0 / barLen);
+    const deg = ARP[k % ARP.length];
+    const oct = deg >= 5 ? 12 : 0;
+    const midi = 62 + chordAt(barIdx) + PENTA[deg % 5] + oct;
+    const f = mtof(midi);
+    const note = pluckNote(f, 1.9, rng, bright * (0.8 + rng() * 0.4));
+    const vel = 0.16 * (0.55 + rng() * 0.45) * (k % 8 === 0 ? 1.5 : 1);
+    const [gl, gr] = panGains((rng() - 0.5) * 0.7);
+    mixWrap(L, note, vel * gl, N(t0));
+    mixWrap(R, note, vel * gr, N(t0));
   }
-  // shimmer: soft sines two octaves up with slow tremolo
-  chords.forEach((c, ci) => {
-    const len = N(cl + 2);
-    for (const m of [c.notes[2] + 24, c.notes[4] + 12]) {
-      const f = mtof(m), b = new Float32Array(len);
-      const tr = rr(rng, 0.15, 0.4);
+
+  // --- warm pad bed (two detuned saws per voice, heavily low-passed, slow swell)
+  for (let b = 0; b < bars; b += 2) {
+    const root = 50 + chordAt(b); // D3 region
+    const start = N(b * barLen), len = N(barLen * 2 + 2);
+    const padL = new Float32Array(len), padR = new Float32Array(len);
+    for (const m of [root, root + 7, root + 12]) {
+      for (const [det, side] of [[-5, 0], [6, 1]]) {
+        const tmp = new Float32Array(len);
+        addSaw(tmp, mtof(m) * Math.pow(2, det / 1200), 0.05, 0, len, rng());
+        mix(side ? padR : padL, tmp, 1, 0);
+      }
+    }
+    for (const p of [padL, padR]) {
+      const bq = new Biquad('lowpass', 620, 0.7);
       for (let i = 0; i < len; i++) {
         const t = i / SR;
-        b[i] = Math.sin(2 * Math.PI * f * t) * Math.sin(Math.PI * Math.min(1, t / len * SR)) * (0.6 + 0.4 * Math.sin(2 * Math.PI * tr * t));
+        const env = Math.min(1, t / 2.2) * Math.min(1, Math.max(0, (len / SR - t) / 2.0));
+        p[i] = bq.tick(p[i]) * env;
       }
-      const [gl, gr] = panGains(rr(rng, -0.6, 0.6));
-      mix(L, b, 0.012 * gl, N(ci * cl)); mix(R, b, 0.012 * gr, N(ci * cl));
+      const bq2 = new Biquad('lowpass', 900, 0.7);
+      for (let i = 0; i < len; i++) p[i] = bq2.tick(p[i]);
     }
-  });
-  const chs = [foldTail(L, n), foldTail(R, n)].map((c) => chainPeriodic(c, [['highpass', 30, 0.7], ['lowpass', 9000, 0.7]]));
-  normalizeRms(chs, LOOP_RMS);
+    mixWrap(L, padL, padGain, start);
+    mixWrap(R, padR, padGain, start);
+  }
+
+  // --- soft sub drone on the chord root (no percussive pumping)
+  for (let b = 0; b < bars; b += 2) {
+    const f = mtof(38 + chordAt(b));
+    const start = N(b * barLen), len = N(barLen * 2 + 1.5);
+    const sub = new Float32Array(len);
+    for (let i = 0; i < len; i++) {
+      const t = i / SR;
+      sub[i] = (Math.sin(2 * Math.PI * f * t) * 0.85 + Math.sin(2 * Math.PI * f * 2 * t) * 0.12)
+        * Math.min(1, t / 0.6) * Math.min(1, Math.max(0, (len / SR - t) / 0.8));
+    }
+    mixWrap(L, sub, bassGain, start);
+    mixWrap(R, sub, bassGain, start);
+  }
+
+  // --- sparse bell accents (one per two bars, high pentatonic)
+  for (let b = 0; b < bars; b += 2) {
+    if (rng() < 0.35) continue;
+    const f = mtof(86 + PENTA[Math.floor(rng() * PENTA.length)]);
+    const t0 = (b + 0.5 + rng() * 0.8) * barLen;
+    const len = N(2.6);
+    const bell = new Float32Array(len);
+    for (let i = 0; i < len; i++) {
+      const t = i / SR;
+      bell[i] = (Math.sin(2 * Math.PI * f * t) + 0.4 * Math.sin(2 * Math.PI * f * 2.01 * t) + 0.18 * Math.sin(2 * Math.PI * f * 3.02 * t))
+        * Math.min(1, t / 0.005) * Math.exp(-t / 0.85);
+    }
+    const [gl, gr] = panGains((rng() - 0.5) * 0.9);
+    mixWrap(L, bell, 0.05 * gl, N(t0));
+    mixWrap(R, bell, 0.05 * gr, N(t0));
+  }
+
+  const chs = [foldTail(L, n), foldTail(R, n)].map((c) => chainPeriodic(c, [['highpass', 34, 0.7], ['lowpass', 9000, 0.7]]));
+  normalizeRms(chs, LOOP_RMS * 0.8);
   return { channels: chs, loop: true };
 }
 
+const musicMarket = () => musicJiangnan({ bpm: 92, bars: 8, bright: 0.62, density: 0.5, padGain: 0.4, bassGain: 0.26, seed: 401 });
+const musicRiver = () => musicJiangnan({ bpm: 66, bars: 8, bright: 0.42, density: 0.3, padGain: 0.55, bassGain: 0.2, seed: 907 });
 // ------------------------------------------------------------------ REGISTRY
 // Order = generation order (most important first, so the soundscape comes alive quickly).
 export const RECIPES = {
@@ -841,7 +855,7 @@ export const RECIPES = {
   engineLow: () => engine(701, false), engineHigh: () => engine(702, true), tireHiss,
   sirenWail, sirenHiLo, horn0: () => horn(801, false), horn1: () => horn(802, true), horn2: () => horn(803, false),
   trainRumble, neonZap, wind, crowdBabble, ramenShop,
-  music,
+  musicMarket, musicRiver,
 };
 export const ORDER = Object.keys(RECIPES);
 

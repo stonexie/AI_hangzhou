@@ -2,6 +2,7 @@
 import * as THREE from 'three/webgpu';
 import { AudioCore } from './core.js';
 import { Soundscape } from './soundscape.js';
+import { VoiceLayer } from './voice.js';
 import { ORDER, generate } from './synth.js';
 
 const _fwd = new THREE.Vector3();
@@ -12,7 +13,9 @@ export default {
     this.ctx = ctx;
     this.core = new AudioCore();
     this.soundscape = null;
+    this.voice = new VoiceLayer(ctx, this.core);
     this.started = false;
+    this.voice.load();
 
     const ensureStart = () => {
       if (this.started || ctx.isShot) return;
@@ -22,6 +25,7 @@ export default {
       if (!this.soundscape) {
         this.soundscape = new Soundscape(this.core, ctx);
       }
+      this.voice.start();
       this.started = true;
     };
 
@@ -58,9 +62,11 @@ export default {
       }
     }
 
+    const sys = this;
     ctx.api.audio = {
       core: this.core,
-      get soundscape() { return this.soundscape; },
+      get soundscape() { return sys.soundscape; },
+      get voice() { return sys.voice; },
       start: ensureStart,
     };
   },
@@ -91,5 +97,6 @@ export default {
 
     this.soundscape.setListener(p);
     this.soundscape.update(dt, ctx);
+    this.voice.update(dt, ctx);
   },
 };

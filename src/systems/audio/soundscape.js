@@ -12,8 +12,8 @@ const SOUND_C = 343;
 
 // A small pool of positional loop emitters that get assigned to the nearest candidate points.
 class EmitterPool {
-  constructor(core, { buffer, count, dest, send = 0, hrtf = true, ref = 2, rolloff = 1, maxD = 20, rate = () => 1 }) {
-    this.core = core; this.maxD = maxD; this.slots = [];
+  constructor(core, { buffer, count, dest, send = 0, hrtf = true, ref = 2, rolloff = 1, maxD = 20, rate = () => 1, vol = 1 }) {
+    this.core = core; this.maxD = maxD; this.slots = []; this.vol = vol;
     for (let i = 0; i < count; i++) {
       const pan = core.panner(dest, { hrtf, ref, rolloff });
       if (send) pan.connect(core.gain(send, core.reverbSend));
@@ -54,7 +54,7 @@ class EmitterPool {
     }
   }
   update(scale) {
-    for (const s of this.slots) this.core.set(s.h.gain.gain, s.target * scale * s.mul * s.dip, 0.15);
+    for (const s of this.slots) this.core.set(s.h.gain.gain, s.target * scale * s.mul * s.dip * this.vol, 0.15);
   }
   active() { return this.slots.filter((s) => s.key); }
 }
@@ -88,8 +88,8 @@ export class Soundscape {
     this.wind = c.loop('wind', c.exterior);
     this.crowdLP = c.filter('lowpass', 4000, 0.7, c.exterior);
     this.crowd = c.loop('crowdBabble', this.crowdLP);
-    this.neon = new EmitterPool(c, { buffer: (i) => (i % 2 ? 'neonB' : 'neonA'), count: 4, dest: c.exterior, send: 0.1, hrtf: true, ref: 1.2, rolloff: 1.6, maxD: 16, rate: (i) => [1, 1, 1.2, 0.998][i] });
-    this.vending = new EmitterPool(c, { buffer: 'vending', count: 2, dest: c.exterior, send: 0.08, hrtf: true, ref: 1.0, rolloff: 1.5, maxD: 12 });
+    this.neon = new EmitterPool(c, { buffer: (i) => (i % 2 ? 'neonB' : 'neonA'), count: 4, dest: c.exterior, send: 0.1, hrtf: true, ref: 1.2, rolloff: 1.6, maxD: 16, rate: (i) => [1, 1, 1.2, 0.998][i], vol: 0.42 });
+    this.vending = new EmitterPool(c, { buffer: 'vending', count: 2, dest: c.exterior, send: 0.08, hrtf: true, ref: 1.0, rolloff: 1.5, maxD: 12, vol: 0.6 });
     this.shops = new EmitterPool(c, { buffer: 'ramenShop', count: 2, dest: c.exterior, send: 0.25, hrtf: true, ref: 2.5, rolloff: 1.2, maxD: 26 });
     this.tires = new EmitterPool(c, { buffer: 'tireHiss', count: 3, dest: c.exterior, send: 0.2, hrtf: false, ref: 4, rolloff: 1.2, maxD: 45 });
 
@@ -125,8 +125,10 @@ export class Soundscape {
     this.tireIn = c.loop('tireHiss', this.tireInLP);
     this.gear = 1; this.rpm = 900; this.carPrev = null; this.carSpeed = 0;
 
-    // --- music
-    this.musicLoop = c.loop('music', c.music, { gain: 1, offset: 0 });
+    // --- music (two adaptive Jiangnan beds cross-faded by district)
+    this.musicMarket = c.loop('musicMarket', c.music, { gain: 0, offset: 0 });
+    this.musicRiver = c.loop('musicRiver', c.music, { gain: 0, offset: 7.5 });
+    this.musicK = 0;
 
     // event bus hooks
     this._on = [];
@@ -185,7 +187,14 @@ export class Soundscape {
     this.tires.update(0.6 * (0.3 + 0.7 * (w.wetness ?? 1)));
     if (this.metalPos) c.set(this.metal.gain.gain, 0.7 * rain * this.metalPos.k, 0.25);
     else c.set(this.metal.gain.gain, 0, 0.3);
-    c.set(this.crowd.gain.gain, 0.3 * (this.crowdDensity ?? 0), 0.6);
+    c.set(this.crowd.gain.gain, 0.07 * (this.crowdDensity ?? 0), 0.6);
+
+    // adaptive Jiangnan score: riverside vs. night-market, ducked inside a car / while paused
+    const riverK = p.x > 118 ? 1 : 0;
+    this.musicK += (riverK - this.musicK) * Math.min(1, dt * 0.35);
+    const mDuck = (inCar ? 0.45 : 1) * (paused ? 0.35 : 1);
+    c.set(this.musicMarket.gain.gain, 0.26 * (1 - this.musicK) * mDuck, 1.4);
+    c.set(this.musicRiver.gain.gain, 0.22 * this.musicK * mDuck, 1.4);
 
     this.updateTrain(dt, ctx, p);
     this.updateEvents(dt, ctx, p, w);
