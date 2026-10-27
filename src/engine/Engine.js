@@ -95,28 +95,19 @@ export class Engine {
   // Pipelines are keyed by render target formats + MRT, so we must compile against the PostFX scene pass (not the
   // canvas), and with frustum culling off so objects outside the initial view are included too.
   async precompile(onProgress) {
-    const { renderer, scene, camera } = this;
+    const { scene } = this;
     const t0 = performance.now();
-    const sp = this.postfx.scenePass;
+    // Heavy WebGPU pipeline compilation is warmed by the two postfx.render() calls in main.js.
+    // Do NOT bind the scene-pass MRT around an async compile here: a compile that is still in flight when the
+    // postfx passes are created produces "Color target has no corresponding fragment stage output" pipelines.
     const culled = [];
     scene.traverse((o) => { if (o.frustumCulled) { o.frustumCulled = false; culled.push(o); } });
-    const prevRT = renderer.getRenderTarget(), prevMRT = renderer.getMRT();
-    try {
-      renderer.setRenderTarget(sp.renderTarget);
-      renderer.setMRT(sp.getMRT());
-      await renderer.compileAsync(scene, camera, null, (e) => onProgress(e.total ? e.loaded / e.total : 1, `compiling shaders ${e.loaded}/${e.total}`));
-    } catch (e) {
-      console.warn('[engine] precompile failed', e);
-    } finally {
-      renderer.setRenderTarget(prevRT);
-      renderer.setMRT(prevMRT);
-      for (const o of culled) o.frustumCulled = true;
-    }
     for (const s of this.systems) {
       if (s._failed || !s.precompile) continue;
       try { await s.precompile(this.ctx); } catch (e) { console.warn(`[engine] ${s.name}.precompile failed`, e); }
     }
-    console.log(`[engine] shader precompile ${(performance.now() - t0).toFixed(0)}ms`);
+    for (const o of culled) o.frustumCulled = true;
+    console.log(`[engine] precompile ${(performance.now() - t0).toFixed(0)}ms`);
   }
 
   applyShotView(name) {

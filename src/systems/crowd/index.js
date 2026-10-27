@@ -6,8 +6,8 @@ import { CharacterLibrary, CROWD_U } from './characters.js';
 import { VatOutfit, VAT_MAP } from './vat.js';
 import { Population } from './agents.js';
 
-const NEAR_R = 42;        // skinned radius
-const MAX_SKINNED = 40;   // simultaneous skinned NPCs
+const NEAR_R = 65;        // skinned radius
+const MAX_SKINNED = 64;   // simultaneous skinned NPCs
 const FAR_R = 165;        // VAT radius
 const VAT_MAX = 220;      // per-outfit instance cap
 
@@ -46,23 +46,10 @@ export default {
         this.group.add(v.mesh);
       } catch (e) { console.warn('[crowd] VAT bake failed', outfit, e); }
     }
-    // far umbrellas (instanced, hand-attached via baked hand matrices)
+    // Far umbrellas are intentionally not instanced: the source umbrella meshes live in a different bind
+    // space than the baked hand matrix, so the domes landed at the NPCs' feet as dark blobs. Near-LOD
+    // characters (within NEAR_R) still carry real skinned umbrellas, which is all you can read at distance.
     this.farUmb = {};
-    const anySex = Object.values(lib.sexes)[0];
-    for (const kind of ['black', 'clear', 'led']) {
-      const src = anySex.byName['umbrella_' + kind];
-      if (!src) continue;
-      const parts = [];
-      src.traverse((o) => {
-        if (!o.isMesh) return;
-        const im = new THREE.InstancedMesh(o.geometry, lib.material(o.material.name.replace(/^crowd_/, ''), anySex.meta), VAT_MAX);
-        im.userData.tint = lib.tintFor(o.material.name.replace(/^crowd_/, ''), anySex.meta, 0);
-        im.frustumCulled = false; im.count = 0; im.name = 'crowd_far_umbrella_' + kind;
-        im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-        this.group.add(im); parts.push(im);
-      });
-      this.farUmb[kind] = { parts, count: 0 };
-    }
     if (qs.has('crowdtest')) { this.initTest(ctx, qs.get('crowdtest')); return; }
     console.log(`[crowd] ${this.pop.agents.length} agents, ${Object.keys(this.vats).length} VAT outfits baked in ${(performance.now() - t0).toFixed(0)}ms`);
 
@@ -235,7 +222,7 @@ export default {
       ch.object.rotation.y = ag.yaw;
 
       // Sync phone accessory if agent dynamically pulled out or put away their phone
-      const showPhone = Boolean(ag.phone && (ag.clip === 'phone_idle' || ag.clip === 'phone_walk'));
+      const showPhone = Boolean(ag.phone && (ag.clip === 'phone_idle' || ag.clip === 'phone_walk' || ag.clip === 'photo'));
       if (ch.lastShowPhone !== showPhone) {
         ch.setAccessory(ag.umbrella, showPhone);
         ch.lastShowPhone = showPhone;

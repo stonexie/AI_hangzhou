@@ -12,6 +12,7 @@ import {
   applyHanfuToEntry,
   getWestLakeUmbrellaTexture,
 } from './hanfu.js';
+import { buildActionClips } from './actions.js';
 
 export const CROWD_U = {
   wetness: uniform(1.0),
@@ -361,16 +362,46 @@ export class CharacterLibrary {
     this.sexes = {}; // sex -> { gltf, meta, templates: {outfit: Object3D}, clips: {name: AnimationClip} }
     this.matCache = new Map();
     this.textures = new Map();
+    this.aiModels = {};
+  }
+
+  async loadAiCharacters() {
+    const specs = [
+      { key: 'ai_f_hanfu', path: 'models/crowd/npc_female_hanfu.glb' },
+      { key: 'ai_f_modern', path: 'models/crowd/npc_female_modern.glb' },
+      { key: 'ai_m_guochao', path: 'models/crowd/npc_male_guochao.glb' },
+      { key: 'ai_m_casual', path: 'models/crowd/npc_male_casual.glb' },
+    ];
+    await Promise.all(specs.map(async (sp) => {
+      const [g, mapTex, nrmTex] = await Promise.all([
+        this.ctx.assets.gltf(sp.path),
+        this.ctx.assets.texture(`textures/crowd/${sp.key}_d.jpg`, { srgb: true }),
+        this.ctx.assets.texture(`textures/crowd/${sp.key}_n.jpg`, { srgb: false }),
+      ]);
+      if (mapTex) { mapTex.flipY = false; mapTex.anisotropy = 8; mapTex.needsUpdate = true; this.textures.set(`textures/crowd/${sp.key}_d.jpg`, mapTex); }
+      if (nrmTex) { nrmTex.flipY = false; nrmTex.anisotropy = 8; nrmTex.needsUpdate = true; this.textures.set(`textures/crowd/${sp.key}_n.jpg`, nrmTex); }
+      if (!g?.scene) return;
+      let foundMesh = null;
+      g.scene.traverse((o) => { if (o.isMesh && !foundMesh) foundMesh = o; });
+      if (!foundMesh) return;
+      const geo = foundMesh.geometry.clone();
+      this.aiModels[sp.key] = { key: sp.key, geometry: geo };
+    }));
   }
 
   async load() {
     const ctx = this.ctx;
+    await this.loadAiCharacters();
     const load = async (sex) => {
       const [gltf, meta] = await Promise.all([
         ctx.assets.gltf(`models/crowd/${sex}.glb`),
         fetch(`/models/crowd/${sex}.json`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
       ]);
       if (!gltf || !meta) return;
+      meta.textures = meta.textures || {};
+      for (const k of ['ai_f_hanfu', 'ai_f_modern', 'ai_m_guochao', 'ai_m_casual']) {
+        meta.textures[k] = { map: `textures/crowd/${k}_d.jpg`, normal: `textures/crowd/${k}_n.jpg` };
+      }
       await this.prepareTextures(meta);
       const clips = {};
       for (const c of gltf.animations) clips[c.name] = c;
@@ -386,6 +417,16 @@ export class CharacterLibrary {
         }
       }
       const entry = { sex, gltf, meta, clips, templates: {}, lodTemplates: {}, outfits: Object.keys(meta.outfits) };
+      // 程序化日常动作（哈欠/伸懒腰/张望/聊天/喝水/吃面/拍照/招手/看表/下蹲/整理衣领）
+      try {
+        const built = buildActionClips(gltf.scene);
+        for (const [name, clip] of Object.entries(built.clips)) {
+          entry.clips[name] = clip;
+          entry.meta.clips[name] = { period: built.durations[name], speed: 0, frames: Math.round(built.durations[name] * 20) };
+        }
+      } catch (e) {
+        console.warn('[crowd] procedural action clips failed', e);
+      }
       this.sexes[sex] = entry;
       this.buildTemplates(entry);
     };
@@ -415,6 +456,17 @@ export class CharacterLibrary {
 
   // ------------------------------------------------------------------------------------------ materials
   tintFor(name, meta, tintIdx) {
+    if (name.startsWith('ai_')) {
+      const aiTints = [
+        [1.00, 1.00, 1.00],
+        [0.95, 0.98, 1.03],
+        [1.03, 0.97, 0.94],
+        [0.94, 1.02, 0.97],
+        [0.98, 0.95, 1.02],
+      ];
+      const c = aiTints[tintIdx % aiTints.length];
+      return new THREE.Color(c[0], c[1], c[2]);
+    }
     const kind = name.startsWith('hair') ? 'hair' : name;
     const gpal = GARMENT[name];
     if (gpal) {
@@ -434,8 +486,8 @@ export class CharacterLibrary {
     if (name === 'phone_screen') {
       return new THREE.Color(0.82, 0.90, 1.0);
     }
-    if (name === 'umb_handle' || name === 'umb_metal') {
-      return new THREE.Color(0.28, 0.24, 0.20);
+    if (name === 'umb_handle' || name === 'umb_metal' || name === 'umb_led') {
+      return new THREE.Color(0.38, 0.26, 0.15);
     }
     if (name.startsWith('umb_')) {
       return new THREE.Color(1, 1, 1);
@@ -498,8 +550,9 @@ export class CharacterLibrary {
     const lookupName = name === 'cloth_msuit' ? 'cloth_mshirt' : name;
     const tex = meta.textures?.[lookupName] || meta.textures?.[name] || {};
     const prefix = name.split('_')[0];
-    const isCloth = prefix === 'cloth';
-    const isGarment = isCloth || prefix === 'rain' || prefix === 'trench' || prefix === 'tech' || prefix === 'knit' || prefix === 'skirt';
+    const isAi = prefix === 'ai';
+    const isCloth = prefix === 'cloth' || isAi;
+    const isGarment = !isAi && (isCloth || prefix === 'rain' || prefix === 'trench' || prefix === 'tech' || prefix === 'knit' || prefix === 'skirt');
     const isFootwear = prefix === 'boots' || prefix === 'shoes' || name === 'sole';
     const isBelt = name.endsWith('_belt');
     const isTrim = prefix === 'trim';
@@ -510,7 +563,7 @@ export class CharacterLibrary {
       map = getWestLakeUmbrellaTexture('clear');
     } else if (name === 'umb_black') {
       map = getWestLakeUmbrellaTexture('black');
-    } else if (name === 'umb_ledcanopy' || name === 'umb_led') {
+    } else if (name === 'umb_ledcanopy') {
       map = this.umbrellaSilkTex || getWestLakeUmbrellaTexture('led');
     } else {
       map = tex.map ? this.textures.get(tex.map) : null;
@@ -561,7 +614,7 @@ export class CharacterLibrary {
     if (map) m.map = map;
     if (nmap) {
       m.normalMap = nmap;
-      m.normalScale = new THREE.Vector2(0.95, 0.95);
+      m.normalScale = new THREE.Vector2(isAi ? 1.18 : 0.95, isAi ? 1.18 : 0.95);
     }
     if (kind === 'hair' || name === 'brow' || name === 'lash') {
       m.alphaTest = 0.45;
@@ -578,6 +631,13 @@ export class CharacterLibrary {
 
     const u = uv();
     let colorBase = map ? texture(map).rgb.mul(tintU) : tintU;
+    if (isAi) {
+      // Ground-contact ambient occlusion & vertical self-shading for sculpted 3D depth under night-market lanterns
+      const hemiShade = clamp(normalWorld.y.mul(0.18).add(0.90), 0.72, 1.08);
+      const viewDir = normalize(cameraPosition.sub(positionWorld));
+      const rim = float(1.0).sub(clamp(abs(dot(normalWorld, viewDir)), 0.0, 1.0)).pow(2.8).mul(0.16);
+      colorBase = colorBase.mul(hemiShade).add(colorBase.mul(rim));
+    }
 
     // Micro-fabric weave detail for both textured and untextured garments (upgraded with ArtForge 1K Song brocade & knit weaves)
     if (detail && (isGarment || isFootwear)) {
@@ -726,6 +786,25 @@ export class CharacterLibrary {
     }
 
     for (const outfit of entry.outfits) {
+      const aiKey = entry.sex === 'female'
+        ? (['f_trench', 'f_elegant', 'f_raincoat'].includes(outfit) ? 'ai_f_hanfu' : 'ai_f_modern')
+        : (['m_jacket', 'm_trench', 'm_suit'].includes(outfit) ? 'ai_m_guochao' : 'ai_m_casual');
+      const aiDef = this.aiModels?.[aiKey];
+      const grp = byName['outfit_' + outfit];
+      if (aiDef && grp) {
+        const sms = [];
+        grp.traverse((o) => { if (o.isSkinnedMesh) sms.push(o); });
+        if (sms.length) {
+          const sm0 = sms[0];
+          sm0.geometry = aiDef.geometry.clone();
+          sm0.material = this.material(aiKey, entry.meta);
+          sm0.userData.matName = aiKey;
+          for (let i = 1; i < sms.length; i++) {
+            sms[i].parent?.remove(sms[i]);
+          }
+          if (entry.meta.outfits?.[outfit]) entry.meta.outfits[outfit].sole = 0;
+        }
+      }
       entry.templates[outfit] = this.makeTemplate(entry, ['outfit_' + outfit, ...ACCESSORIES]);
       entry.lodTemplates[outfit] = byName['outfit_' + outfit + '_lod1'];
     }

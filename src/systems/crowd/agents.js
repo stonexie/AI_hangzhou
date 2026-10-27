@@ -1,6 +1,11 @@
 // Pedestrian population: lanes from LAYOUT, reduced comfortable crowd density, modern Chinese casual outfits,
 // "抱头小跑" (cover_run) rain-jogging behavior, spontaneous everyday life actions,
 // and stimulus reactions without any ground-sliding or road-blocking idlers.
+import { ACTION_CLIPS } from './actions.js';
+
+const ACTION_DUR = Object.fromEntries(ACTION_CLIPS.map((c) => [c.name, c.duration]));
+// everyday actions that read well on a standing NPC (skips the ones needing props/interaction)
+const IDLE_ACTION_POOL = ['yawn', 'stretch', 'look_around', 'chat', 'drink', 'photo', 'check_watch', 'adjust_collar', 'wave_hello'];
 export function mulberry32(a) {
   return function () {
     a |= 0; a = (a + 0x6d2b79f5) | 0;
@@ -205,19 +210,25 @@ export class Population {
       }
     }
 
-    // Spawn dedicated night-market stall visitors browsing & photographing the 3D PBR Noodle Stalls
+    // Spawn dedicated night-market stall visitors & spawn-front showcase NPCs (all 4 AI 3D PBR archetypes)
     const stallVisitors = [
-      { x: -7.1, z: 12.2, yaw: -Math.PI * 0.55, outfit: { sex: 'female', outfit: 'f_trench', tint: 2, hairTint: 1 } },
-      { x: -7.3, z: 10.6, yaw: -Math.PI * 0.35, outfit: { sex: 'male', outfit: 'm_jacket', tint: 1, hairTint: 0 } },
-      { x:  7.1, z: -5.5, yaw:  Math.PI * 0.52, outfit: { sex: 'female', outfit: 'f_casual', tint: 3, hairTint: 2 } },
-      { x: -7.1, z: -37.5, yaw: -Math.PI * 0.48, outfit: { sex: 'female', outfit: 'f_hoodie', tint: 4, hairTint: 0 } },
+      { x: -6.7, z: 21.8, yaw:  Math.PI * 0.22, action: 'photo', outfit: { sex: 'female', outfit: 'f_trench', tint: 0, hairTint: 0 } },   // 宋制汉服少女（出生点左前方）
+      { x: -6.9, z: 19.6, yaw:  Math.PI * 0.12, action: 'chat', outfit: { sex: 'male',   outfit: 'm_jacket', tint: 0, hairTint: 0 } },   // 新中式立领盘扣男（出生点左前方）
+      { x:  6.7, z: 21.2, yaw: -Math.PI * 0.25, action: 'drink', outfit: { sex: 'female', outfit: 'f_casual', tint: 1, hairTint: 1 } },   // 现代燕麦风衣女（出生点右前方）
+      { x:  6.9, z: 19.0, yaw: -Math.PI * 0.15, action: 'look_around', outfit: { sex: 'male',   outfit: 'm_techwear', tint: 1, hairTint: 0 } }, // 都市山系冲锋衣男（出生点右前方）
+      { x: -7.1, z: 12.2, yaw: -Math.PI * 0.55, action: 'eat', outfit: { sex: 'female', outfit: 'f_trench', tint: 2, hairTint: 1 } },   // 面摊前吃面的汉服顾客
+      { x: -7.3, z: 10.6, yaw: -Math.PI * 0.35, action: 'eat', outfit: { sex: 'male',   outfit: 'm_jacket', tint: 1, hairTint: 0 } },   // 面摊前吃面的国潮顾客
+      { x:  7.1, z: -5.5, yaw:  Math.PI * 0.52, action: 'check_watch', outfit: { sex: 'female', outfit: 'f_casual', tint: 3, hairTint: 2 } }, // 看表的通勤女
+      { x: -7.1, z: -37.5, yaw: -Math.PI * 0.48, action: 'adjust_collar', outfit: { sex: 'female', outfit: 'f_hoodie', tint: 4, hairTint: 0 } }, // 整理衣领的路人
     ];
     for (const sv of stallVisitors) {
       const ag = addIdler(sv.x, sv.z, sv.yaw, { ...sv.outfit, scale: 1.0 });
-      if (ag && sv.x < 0 && sv.z > 11.5) {
-        ag.umbrella = 'led';
-        ag.phone = false;
-        ag.clip = 'umbrella_idle';
+      if (ag) {
+        ag.umbrella = null;
+        ag.phone = sv.action === 'photo';
+        ag.clip = sv.action;
+        ag.actionTimer = (ACTION_DUR[sv.action] || 3) + 0.3;
+        ag.phase = 0;
       }
     }
   }
@@ -335,9 +346,26 @@ export class Population {
       // --- 2. Idler Lifelike Behavior ---
       if (ag.kind === 'idle') {
         const info = clipInfo(ag);
-        if (ag.moodTimer <= 0 && !ag.reactType) {
-          ag.moodTimer = 5 + ((ag.id * 17) % 9);
-          if (!ag.umbrella) {
+        // one-shot everyday action (打哈欠/伸懒腰/东张西望/聊天/喝水/拍照/看表/整理衣领)
+        if (ag.actionTimer > 0) {
+          ag.actionTimer -= dt;
+          if (ag.actionTimer <= 0) {
+            ag.actionTimer = 0;
+            ag.clip = ag.phone ? 'phone_idle' : 'idle';
+            ag.phase = 0;
+          }
+        }
+        if (ag.moodTimer <= 0 && !ag.reactType && !(ag.actionTimer > 0)) {
+          ag.moodTimer = 4 + ((ag.id * 17) % 8);
+          ag.actionSeq = (ag.actionSeq | 0) + 1;
+          const pick = ((ag.id * 7 + ag.actionSeq * 13) % 100) / 100;
+          if (!ag.umbrella && pick < 0.62) {
+            const a = IDLE_ACTION_POOL[(ag.id + ag.actionSeq * 3) % IDLE_ACTION_POOL.length];
+            ag.phone = a === 'photo';
+            ag.clip = a;
+            ag.phase = 0;
+            ag.actionTimer = (ACTION_DUR[a] || 3) + 0.4;
+          } else if (!ag.umbrella) {
             const roll = ((ag.id + Math.floor(ag.phase * 100)) % 10) / 10;
             if (roll < 0.35) {
               ag.phone = true;

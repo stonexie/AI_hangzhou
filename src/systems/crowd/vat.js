@@ -16,6 +16,9 @@ export const VAT_CLIPS = { walk: 16, cover_run: 16, umbrella_walk: 16, idle: 28,
 export const VAT_MAP = {
   walk: 'walk', walk_slow: 'walk', walk_fast: 'walk', cover_run: 'cover_run', phone_walk: 'walk', umbrella_walk: 'umbrella_walk',
   idle: 'idle', idle_b: 'idle', phone_idle: 'phone_idle', umbrella_idle: 'umbrella_idle',
+  // procedural standing actions reuse the idle VAT cycle at distance
+  yawn: 'idle', stretch: 'idle', look_around: 'idle', chat: 'idle', drink: 'idle', eat: 'idle',
+  photo: 'phone_idle', wave_hello: 'idle', check_watch: 'idle', squat_pickup: 'idle', adjust_collar: 'idle',
 };
 
 function toHalf(v) { return THREE.DataUtils.toHalfFloat(v); }
