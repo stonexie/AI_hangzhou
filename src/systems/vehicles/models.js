@@ -267,12 +267,10 @@ function extract(gltf, type) {
     }
   }
 
-  // Upgrade all ground vehicles with high-detail exterior trim: side mirrors, roof LiDAR pod, shark-fin antenna & full-width cyber-Jiangnan LED tail bar
+  // Upgrade all ground vehicles with high-detail exterior trim: side mirrors, roof LiDAR pod & full-width cyber-Jiangnan LED tail bar
   if (type !== 'av') {
     if (!body.has('trim')) body.set('trim', []);
-    if (!body.has('chrome')) body.set('chrome', []);
     if (!body.has('lights_tail')) body.set('lights_tail', []);
-    if (!body.has('lights_aux')) body.set('lights_aux', []);
 
     const mirrorSpec = {
       hero:  { x: 0.96, y: 0.92, z: -0.62, rearZ: 2.42, rearY: 0.72, rearW: 1.56, roofY: 1.28, roofZ: -0.32 },
@@ -284,7 +282,7 @@ function extract(gltf, type) {
     }[type];
 
     if (mirrorSpec) {
-      // Sculpted aerodynamic side-view mirrors + chrome mirror glass
+      // Sculpted aerodynamic side-view mirrors
       for (const sx of [-1, 1]) {
         const stalk = new THREE.BoxGeometry(0.10, 0.03, 0.04);
         stalk.translate(sx * (mirrorSpec.x - 0.03), mirrorSpec.y - 0.02, mirrorSpec.z);
@@ -300,6 +298,7 @@ function extract(gltf, type) {
 
       // Sleek forward roof autonomous-driving LiDAR module (西子智驾激光雷达舱) on modern cars
       if (type === 'hero' || type === 'sedan' || type === 'suv') {
+        if (!body.has('lights_aux')) body.set('lights_aux', []);
         const lidarPod = new THREE.BoxGeometry(0.28, 0.048, 0.18);
         lidarPod.translate(0, mirrorSpec.roofY + 0.024, mirrorSpec.roofZ);
         body.get('trim').push(cleanGeom(lidarPod, null));
@@ -309,6 +308,7 @@ function extract(gltf, type) {
 
       // Illuminated Hangzhou Wulin Night Market cultural side livery panels on `van`
       if (type === 'van') {
+        if (!body.has('lights_aux')) body.set('lights_aux', []);
         const leftPanel = new THREE.PlaneGeometry(3.1, 1.08);
         leftPanel.rotateY(-Math.PI / 2);
         leftPanel.translate(-0.965, 1.42, 0.58);
@@ -334,6 +334,7 @@ function extract(gltf, type) {
   const merge = (map) => {
     const out = [];
     for (const [mat, list] of map) {
+      if (!list || !list.length) continue;
       const g = list.length === 1 ? list[0] : mergeGeometries(ensureIndexed(list), false);
       if (!g) continue;
       g.computeBoundingSphere();

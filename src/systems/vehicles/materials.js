@@ -5,7 +5,7 @@
 import * as THREE from 'three/webgpu';
 import {
   float, vec2, vec3, vec4, uniform, time, floor, fract, length, smoothstep, mix, clamp, abs, max, min, normalize, step, sin,
-  positionGeometry, normalGeometry, normalWorld, normalView, cameraViewMatrix, instanceColor, dot, pow, positionWorld, cameraPosition, texture, uv,
+  positionGeometry, normalGeometry, normalView, cameraViewMatrix, instanceColor, dot, pow, positionWorld, cameraPosition, texture, uv,
 } from 'three/tsl';
 import { hash21, hash22, hash23, vnoise } from '../../materials/noise.js';
 import { wetUniforms } from '../../materials/wet.js';
@@ -196,9 +196,8 @@ export function makePaint({ metalness = 0.68, roughness = 0.22, flake = 1.0, coa
   const flakeB = fh.x.sub(0.5).mul(0.26 * flake).add(1.0);
   const grime = smoothstep(0.48, 0.10, p.y).mul(vnoise(vec2(p.x.add(p.z), p.y).mul(6.0)).mul(0.5).add(0.35));
   const rain = rainNodes({});
-  // Subtle grazing-angle metallic pearl coat highlight (珠光清漆折光)
-  const viewDir = normalize(cameraPosition.sub(positionWorld));
-  const fresnel = float(1.0).sub(clamp(abs(dot(normalWorld, viewDir)), 0.0, 1.0)).pow(3.0);
+  // Grazing-angle metallic pearl coat highlight using view-space normal
+  const fresnel = float(1.0).sub(clamp(abs(normalView.z), 0.0, 1.0)).pow(3.0);
   let baseCol = vec3(flakeB).mul(float(1).sub(grime.mul(0.28)));
   if (paintNode) baseCol = baseCol.mul(paintNode);
   m.colorNode = baseCol.add(baseCol.mul(fresnel.mul(solid ? 0.12 : 0.28)));
@@ -293,9 +292,21 @@ export function makeAux(kind, L = instanceColor) {
     m.emissiveNode = vec3(0.15, 0.85, 0.55).mul(L.y.mul(3.5).mul(pulse));
   } else if (kind === 'van') {
     if (!_texCache.has('van_livery')) {
-      const vt = new THREE.TextureLoader().load('/textures/signage/van_livery.png');
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 256;
+      const g = c.getContext('2d');
+      g.fillStyle = '#122832'; g.fillRect(0, 0, 512, 256);
+      g.strokeStyle = '#dfbe7f'; g.lineWidth = 6; g.strokeRect(10, 10, 492, 236);
+      g.fillStyle = '#ffe298'; g.font = '900 44px "Kaiti SC", "STKaiti", serif';
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText('杭州武林夜市 · 江南风物专送', 256, 128);
+      const vt = new THREE.CanvasTexture(c);
       vt.colorSpace = THREE.SRGBColorSpace;
+      vt.needsUpdate = true;
       _texCache.set('van_livery', vt);
+      const img = new Image();
+      img.onload = () => { g.drawImage(img, 0, 0, 512, 256); vt.needsUpdate = true; };
+      img.src = '/textures/signage/van_livery.png';
     }
     const samp = texture(_texCache.get('van_livery'), uv());
     m.colorNode = samp.rgb;
