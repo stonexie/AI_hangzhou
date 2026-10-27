@@ -123,6 +123,13 @@ export async function buildLibrary(images) {
   ];
   sqDesigns.forEach((d, idx) => {
     put(L.boxSq, CA.add(360, 360, (g) => {
+      if (images?.lightbox) {
+        const iw = images.lightbox.width / 4, ih = images.lightbox.height / 2;
+        const cx = (idx % 4) * iw, cy = Math.floor(idx / 4) * ih;
+        g.drawImage(images.lightbox, cx, cy, iw, ih, 0, 0, 360, 360);
+        g.strokeStyle = d.accent; g.lineWidth = 8; g.strokeRect(10, 10, 340, 340);
+        return;
+      }
       g.fillStyle = d.bg; g.fillRect(0, 0, 360, 360);
       g.strokeStyle = d.accent; g.lineWidth = 10; g.strokeRect(14, 14, 332, 332);
       g.strokeStyle = d.fg; g.lineWidth = 3; g.strokeRect(26, 26, 308, 308);
@@ -226,8 +233,15 @@ export async function buildLibrary(images) {
     { top: '钱塘观潮', mid: '一线怒潮 · 气吞山河', bot: '六和塔下 观景专线直达', bg: '#0e1e36', fg: '#ffffff', acc: '#00e8ff' },
     { top: '杭罗云锦', mid: '霓裳羽衣 · 江南丝绸', bot: '拱宸桥西 杭州织造局', bg: '#1f1916', fg: '#ffd898', acc: '#ff5040' },
   ];
-  posterSpecs.forEach((p) => {
+  posterSpecs.forEach((p, idx) => {
     put(L.posters, CA.add(256, 256, (g) => {
+      if (images?.posters) {
+        const iw = images.posters.width / 4, ih = images.posters.height / 2;
+        const cx = (idx % 4) * iw, cy = Math.floor(idx / 4) * ih;
+        g.drawImage(images.posters, cx, cy, iw, ih, 0, 0, 256, 256);
+        g.strokeStyle = p.acc; g.lineWidth = 4; g.strokeRect(6, 6, 244, 244);
+        return;
+      }
       g.fillStyle = p.bg; g.fillRect(0, 0, 256, 256);
       g.strokeStyle = p.acc; g.lineWidth = 6; g.strokeRect(10, 10, 236, 236);
       g.fillStyle = p.acc; g.fillRect(22, 22, 212, 34);
@@ -245,8 +259,15 @@ export async function buildLibrary(images) {
     { title: '江南丝绸', sub: '非遗杭罗 · 锦绣华裳', tag: '丝绸之府 · 百年织造', bg0: '#381028', bg1: '#180c2c', acc: '#ff82c8' },
     { title: '知味名点', sub: '百年杭帮 · 全天热腾供应', tag: '中华老字号 · 杭帮风味', bg0: '#3e1410', bg1: '#1e100c', acc: '#ffd248' },
   ];
-  screenSpecs.forEach((sc) => {
+  screenSpecs.forEach((sc, idx) => {
     put(L.screens, CA.add(300, 300, (g) => {
+      if (images?.ads) {
+        const iw = images.ads.width / 2, ih = images.ads.height / 2;
+        const cx = (idx % 2) * iw, cy = Math.floor(idx / 2) * ih;
+        g.drawImage(images.ads, cx, cy, iw, ih, 0, 0, 300, 300);
+        g.strokeStyle = sc.acc; g.lineWidth = 5; g.strokeRect(8, 8, 284, 284);
+        return;
+      }
       const gr = g.createLinearGradient(0, 0, 300, 300);
       gr.addColorStop(0, sc.bg0); gr.addColorStop(1, sc.bg1);
       g.fillStyle = gr; g.fillRect(0, 0, 300, 300);

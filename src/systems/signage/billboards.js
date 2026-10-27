@@ -115,41 +115,9 @@ function customizeMiraiBillboard(baseTex) {
   const g = c.getContext('2d');
   if (baseTex?.image) g.drawImage(baseTex.image, 0, 0, 1024, 1536);
   else { g.fillStyle = '#18100c'; g.fillRect(0, 0, 1024, 1536); }
-  // Warm Jiangnan night market gradient overlay
-  const topGrad = g.createLinearGradient(0, 0, 0, 380);
-  topGrad.addColorStop(0, 'rgba(28, 14, 10, 0.96)');
-  topGrad.addColorStop(0.75, 'rgba(32, 18, 12, 0.86)');
-  topGrad.addColorStop(1, 'rgba(32, 18, 12, 0)');
-  g.fillStyle = topGrad; g.fillRect(0, 0, 1024, 380);
-
-  const botGrad = g.createLinearGradient(0, 1100, 0, 1536);
-  botGrad.addColorStop(0, 'rgba(24, 14, 10, 0)');
-  botGrad.addColorStop(0.28, 'rgba(24, 14, 10, 0.92)');
-  botGrad.addColorStop(1, 'rgba(16, 10, 8, 0.98)');
-  g.fillStyle = botGrad; g.fillRect(0, 1100, 1024, 436);
-
-  g.textAlign = 'center';
-  g.fillStyle = '#ffd875';
-  g.font = '700 42px "Kaiti SC", "STKaiti", "PingFang SC", serif';
-  g.fillText('◆ 钱塘繁华 · 武林门 ◆', 512, 86);
-  g.fillStyle = '#fff8eb';
-  g.shadowColor = '#ff7b29'; g.shadowBlur = 24;
-  g.font = '900 124px "Kaiti SC", "STKaiti", "PingFang SC", serif';
-  g.fillText('杭州武林夜市', 512, 226);
-  g.shadowBlur = 0;
-
-  g.fillStyle = '#ffe07d';
-  g.font = '900 88px "Kaiti SC", "STKaiti", "PingFang SC", serif';
-  g.fillText('人间烟火 · 风雅江南', 512, 1335);
-  g.fillStyle = '#ff9e5e';
-  g.font = '700 42px "PingFang SC", "Microsoft YaHei", sans-serif';
-  g.fillText('非遗手作 · 江南名点 · 丝绸茶香 · 传统书画', 512, 1420);
-  g.strokeStyle = '#ffd875'; g.lineWidth = 4;
-  g.strokeRect(48, 1458, 928, 44);
-  g.fillStyle = '#ffd875';
-  g.font = '700 26px "PingFang SC", "Microsoft YaHei", sans-serif';
-  g.fillText('武林路 · 龙游路历史文化街区 · 每晚华灯初上热闹开市', 512, 1489);
-
+  g.strokeStyle = 'rgba(255, 216, 117, 0.75)';
+  g.lineWidth = 8;
+  g.strokeRect(16, 16, 992, 1504);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.NoColorSpace;
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
@@ -162,35 +130,6 @@ function customizeAdsGrid(baseTex) {
   c.width = 1024; c.height = 1024;
   const g = c.getContext('2d');
   if (baseTex?.image) g.drawImage(baseTex.image, 0, 0, 1024, 1024);
-  const cells = [
-    { x: 0, y: 0, top: '江南非遗 · 匠心手作', main: '西湖绸伞', sub: '竹骨绸面 · 绘尽西湖十景风韵', acc: '#7ce8d8' },
-    { x: 512, y: 0, top: '武林门下 · 市井繁华', main: '武林夜市', sub: '三百摊位 · 汇集杭城南北风物', acc: '#ffb85c' },
-    { x: 0, y: 512, top: '明前狮峰 · 幽香甘醇', main: '西湖龙井', sub: '虎跑泉水冲泡 · 江南春茶上品', acc: '#8ce896' },
-    { x: 512, y: 512, top: '百年名点 · 现包现蒸', main: '知味小笼', sub: '片儿川 · 定胜糕 · 桂花糖藕', acc: '#ffd86b' },
-  ];
-  for (const cl of cells) {
-    const gr = g.createLinearGradient(cl.x, cl.y, cl.x, cl.y + 512);
-    gr.addColorStop(0, 'rgba(22, 16, 12, 0.85)');
-    gr.addColorStop(0.45, 'rgba(22, 16, 12, 0.30)');
-    gr.addColorStop(0.75, 'rgba(22, 16, 12, 0.90)');
-    gr.addColorStop(1, 'rgba(14, 10, 8, 0.96)');
-    g.fillStyle = gr;
-    g.fillRect(cl.x, cl.y, 512, 512);
-    g.strokeStyle = cl.acc; g.lineWidth = 6;
-    g.strokeRect(cl.x + 14, cl.y + 14, 484, 484);
-    g.textAlign = 'center';
-    g.fillStyle = cl.acc;
-    g.font = '800 28px "PingFang SC", "Microsoft YaHei", sans-serif';
-    g.fillText(cl.top, cl.x + 256, cl.y + 62);
-    g.fillStyle = '#fff9ee';
-    g.shadowColor = cl.acc; g.shadowBlur = 16;
-    g.font = '900 84px "Kaiti SC", "STKaiti", "PingFang SC", serif';
-    g.fillText(cl.main, cl.x + 256, cl.y + 408);
-    g.shadowBlur = 0;
-    g.fillStyle = cl.acc;
-    g.font = '700 26px "PingFang SC", "Microsoft YaHei", sans-serif';
-    g.fillText(cl.sub, cl.x + 256, cl.y + 466);
-  }
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.NoColorSpace;
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;

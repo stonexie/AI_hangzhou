@@ -330,44 +330,7 @@ async function buildShopAtlas(ctx) {
   g.textAlign = 'center';
   g.textBaseline = 'middle';
 
-  // Slots 1-8 (ramen, izakaya, konbini, pachinko, shelves, shutter, vending, noren) now use native 1K ArtForge Jiangnan textures directly.
-  // ============================================================================
-  // 9. SLOTS.posters ([0, 3072, 1024, 1024]): 杭州江南风物招贴画 (4x4 grid so all 16 cells have Chinese art)
-  // ============================================================================
-  {
-    const [px, py, pw, ph] = SLOTS.posters;
-    const cw = pw / 4, ch = ph / 4;
-    const pList = [
-      { t: '西湖夜游', s: '三潭印月 · 画舫笙歌', bg: '#102438', fg: '#f8e6b8', acc: '#38d8ff' },
-      { t: '明前龙井', s: '狮峰头采 · 甘醇如玉', bg: '#163626', fg: '#f4ebd0', acc: '#88e868' },
-      { t: '江南评弹', s: '琵琶三弦 · 听雨茶座', bg: '#321424', fg: '#ffe8f0', acc: '#ff60a8' },
-      { t: '河坊夜市', s: '定胜糕 · 桂花糖藕', bg: '#78181c', fg: '#fff6d8', acc: '#ffd040' },
-      { t: '越剧新声', s: '梁祝化蝶 · 经典戏台', bg: '#241842', fg: '#f0e8ff', acc: '#b070ff' },
-      { t: '知味早茶', s: '鲜肉小笼 · 猫耳朵', bg: '#382214', fg: '#ffe8c0', acc: '#ff8830' },
-      { t: '钱塘观潮', s: '六和听涛 · 气吞山河', bg: '#0e1e36', fg: '#ffffff', acc: '#00e8ff' },
-      { t: '杭罗丝绸', s: '非遗云锦 · 江南织造', bg: '#1f1916', fg: '#ffd898', acc: '#ff5040' },
-      { t: '奎元面馆', s: '老底子片儿川 · 虾爆鳝', bg: '#581818', fg: '#fff6e0', acc: '#f4c852' },
-      { t: '西泠印学', s: '金石篆刻 · 湖山雅集', bg: '#282420', fg: '#f4ebd4', acc: '#d45b43' },
-      { t: '拱宸夜色', s: '千年运河 · 桥西灯火', bg: '#142838', fg: '#e8f4ff', acc: '#68d8d8' },
-      { t: '灵隐禅茶', s: '云林问茶 · 清心雅韵', bg: '#1c3224', fg: '#f0ebd8', acc: '#a8d888' },
-      { t: '楼外楼宴', s: '西湖醋鱼 · 宋嫂鱼羹', bg: '#681c18', fg: '#fff8e8', acc: '#ffd058' },
-      { t: '西湖绸伞', s: '竹骨绸面 · 江南非遗', bg: '#183842', fg: '#f0f8ff', acc: '#78e8d8' },
-      { t: '南宋御街', s: '百工百戏 · 繁华市井', bg: '#381e14', fg: '#ffe8c8', acc: '#ff9848' },
-      { t: '断桥残雪', s: '宝石流霞 · 西子晴雨', bg: '#182438', fg: '#f4f0e8', acc: '#98c8ff' },
-    ];
-    pList.forEach((p, idx) => {
-      const col = idx % 4, row = Math.floor(idx / 4);
-      const x0 = px + col * cw, y0 = py + row * ch;
-      g.fillStyle = p.bg; g.fillRect(x0 + 4, y0 + 4, cw - 8, ch - 8);
-      g.strokeStyle = p.acc; g.lineWidth = 4; g.strokeRect(x0 + 12, y0 + 12, cw - 24, ch - 24);
-      g.fillStyle = p.acc; g.font = `800 18px ${SANS_CN}`;
-      g.fillText('杭州 · 江南风物', x0 + cw / 2, y0 + 42);
-      g.fillStyle = p.fg; g.font = `900 46px ${SERIF_CN}`;
-      g.fillText(p.t, x0 + cw / 2, y0 + ch * 0.50);
-      g.fillStyle = p.acc; g.font = `700 20px ${SANS_CN}`;
-      g.fillText(p.s, x0 + cw / 2, y0 + ch * 0.80);
-    });
-  }
+    // Slots 1-9 (ramen, izakaya, konbini, pachinko, shelves, shutter, vending, noren, posters) now use native 1K ArtForge Jiangnan textures directly.
 
   const atlas = new THREE.CanvasTexture(canvas);
   atlas.colorSpace = THREE.SRGBColorSpace;
