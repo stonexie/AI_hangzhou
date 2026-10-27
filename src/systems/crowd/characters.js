@@ -511,7 +511,7 @@ export class CharacterLibrary {
     } else if (name === 'umb_black') {
       map = getWestLakeUmbrellaTexture('black');
     } else if (name === 'umb_ledcanopy' || name === 'umb_led') {
-      map = getWestLakeUmbrellaTexture('led');
+      map = this.umbrellaSilkTex || getWestLakeUmbrellaTexture('led');
     } else {
       map = tex.map ? this.textures.get(tex.map) : null;
       nmap = tex.normal ? this.textures.get(tex.normal) : null;
@@ -579,11 +579,11 @@ export class CharacterLibrary {
     const u = uv();
     let colorBase = map ? texture(map).rgb.mul(tintU) : tintU;
 
-    // Micro-fabric weave detail for both textured and untextured garments
+    // Micro-fabric weave detail for both textured and untextured garments (upgraded with ArtForge 1K Song brocade & knit weaves)
     if (detail && (isGarment || isFootwear)) {
       const fabSample = texture(detail, u.mul(detailRep)).r;
-      const weaveAmt = map ? 0.28 : 0.85;
-      colorBase = colorBase.mul(mix(float(1.0), fabSample.mul(1.82), float(weaveAmt)));
+      const weaveAmt = map ? 0.42 : 0.88;
+      colorBase = colorBase.mul(mix(float(1.0), fabSample.mul(1.85), float(weaveAmt)));
     }
 
     // Procedural multi-material pattern & sheen enrichment for garments
@@ -697,7 +697,16 @@ export class CharacterLibrary {
         );
       }
     }
-    await Promise.all(jobs);
+    await Promise.all([
+      ...jobs,
+      this.ctx.assets.texture('textures/crowd/umbrella_silk.jpg', { srgb: true }).then((t) => {
+        if (t) {
+          t.flipY = false;
+          t.needsUpdate = true;
+          this.umbrellaSilkTex = t;
+        }
+      }),
+    ]);
   }
 
   buildTemplates(entry) {

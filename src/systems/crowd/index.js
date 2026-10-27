@@ -250,21 +250,34 @@ export default {
       ch.mixer.timeScale = 1;
       ch.mixer.update(0);
 
-        // Apply subtle lifelike procedural bone rotations (head tracking toward player, natural breathing & startle flinch)
-        if (ch.bones && ag.dist < 18) {
+        // Apply lifelike procedural bone animations (gait counter-sway, breathing, stall/shopfront gaze, conversational nods & startle flinch)
+        if (ch.bones && ag.dist < 28) {
           const hy = ag.headYaw || 0;
           const hp = ag.headPitch || 0;
           const flinch = ag.flinch || 0;
+          const isMoving = ag.kind === 'walk' && (ag.pause || 0) <= 0;
+          const cyc = (ag.phase ?? 0) * Math.PI * 2;
+          const breath = Math.sin(t * 2.2 + ag.id * 1.7) * 0.022;
+          const gaitSway = isMoving ? Math.sin(cyc) * 0.045 : Math.sin(t * 1.1 + ag.id) * 0.015;
+          const shopBrowseYaw = isMoving ? Math.sin(t * 0.75 + ag.id * 2.1) * 0.14 : 0;
+          const talkNod = (!isMoving && !ag.phone) ? Math.max(0, Math.sin(t * 3.4 + ag.id * 1.3)) * 0.055 : 0;
+
+          if (ch.bones.spine1) {
+            ch.bones.spine1.rotation.x += breath + (isMoving ? 0.035 : 0);
+            ch.bones.spine1.rotation.z += gaitSway * 0.6;
+          }
+          if (ch.bones.spine2) {
+            ch.bones.spine2.rotation.y += (isMoving ? Math.cos(cyc) * 0.038 : Math.sin(t * 0.9 + ag.id) * 0.025);
+            ch.bones.spine2.rotation.z += -gaitSway * 0.45 + ((ag.id % 2 ? 1 : -1) * flinch * 0.10);
+          }
           if (ch.bones.neck) {
-            ch.bones.neck.rotation.y += hy * 0.38;
-            ch.bones.neck.rotation.x += hp * 0.35 - flinch * 0.08;
+            ch.bones.neck.rotation.y += (hy + shopBrowseYaw) * 0.42;
+            ch.bones.neck.rotation.x += hp * 0.35 + talkNod * 0.4 - flinch * 0.08;
           }
           if (ch.bones.head) {
-            ch.bones.head.rotation.y += hy * 0.62 + Math.sin(t * 1.4 + ag.id) * 0.04;
-            ch.bones.head.rotation.x += hp * 0.65;
-          }
-          if (ch.bones.spine2 && flinch > 0.01) {
-            ch.bones.spine2.rotation.z += ((ag.id % 2 ? 1 : -1) * flinch * 0.10);
+            ch.bones.head.rotation.y += (hy + shopBrowseYaw) * 0.65 + Math.sin(t * 1.4 + ag.id) * 0.04;
+            ch.bones.head.rotation.x += hp * 0.65 + talkNod * 0.6;
+            ch.bones.head.rotation.z += gaitSway * 0.25;
           }
         }
     }

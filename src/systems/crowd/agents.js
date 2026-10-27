@@ -83,11 +83,11 @@ export class Population {
 
   rainGear(r, ag) {
     const u = r();
-    if (u < 0.13) ag.umbrella = 'clear';
-    else if (u < 0.23) ag.umbrella = 'black';
-    else if (u < 0.28) ag.umbrella = 'led';
+    if (u < 0.18) ag.umbrella = 'led';
+    else if (u < 0.32) ag.umbrella = 'clear';
+    else if (u < 0.42) ag.umbrella = 'black';
     else ag.umbrella = null;
-    ag.phone = !ag.umbrella && r() < 0.28;
+    ag.phone = !ag.umbrella && r() < 0.30;
   }
 
   isInRoadOrIntersection(x, z) {
@@ -202,6 +202,22 @@ export class Population {
           const x = s * (A.roadHalfWidth + A.sidewalkWidth - 0.45);
           addIdler(x, z + r() * 3, s > 0 ? -Math.PI / 2 + (r() - 0.5) : Math.PI / 2 + (r() - 0.5), this.pickLook(r));
         }
+      }
+    }
+
+    // Spawn dedicated night-market stall visitors browsing & photographing the 3D PBR Noodle Stalls
+    const stallVisitors = [
+      { x: -7.1, z: 12.2, yaw: -Math.PI * 0.55, outfit: { sex: 'female', outfit: 'f_trench', tint: 2, hairTint: 1 } },
+      { x: -7.3, z: 10.6, yaw: -Math.PI * 0.35, outfit: { sex: 'male', outfit: 'm_jacket', tint: 1, hairTint: 0 } },
+      { x:  7.1, z: -5.5, yaw:  Math.PI * 0.52, outfit: { sex: 'female', outfit: 'f_casual', tint: 3, hairTint: 2 } },
+      { x: -7.1, z: -37.5, yaw: -Math.PI * 0.48, outfit: { sex: 'female', outfit: 'f_hoodie', tint: 4, hairTint: 0 } },
+    ];
+    for (const sv of stallVisitors) {
+      const ag = addIdler(sv.x, sv.z, sv.yaw, { ...sv.outfit, scale: 1.0 });
+      if (ag && sv.x < 0 && sv.z > 11.5) {
+        ag.umbrella = 'led';
+        ag.phone = false;
+        ag.clip = 'umbrella_idle';
       }
     }
   }
