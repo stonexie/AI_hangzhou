@@ -476,6 +476,60 @@ export async function buildProps(ctx, lots, B, out, { wetness }) {
   mk(acPrims, acMats, acM, acMats.ac_body);
   mk(tankPrims, tankMats, tankM, tankMats.tank);
   mk(ptankPrims, tankMats, ptankM, tankMats.tank);
+
+  // ---------- ArtForge 3D PBR Jiangnan Night-Market Stalls (片儿川面摊) ----------
+  try {
+    const stallGltf = await ctx.assets.gltf('models/buildings/noodle_stall.glb');
+    if (stallGltf?.scene) {
+      stallGltf.scene.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(stallGltf.scene);
+      const sz = new THREE.Vector3(), ctr = new THREE.Vector3();
+      box.getSize(sz); box.getCenter(ctr);
+      const targetH = 2.35;
+      const scale = targetH / Math.max(sz.y, 0.01);
+      const stallSpots = [
+        { x: -8.75, y: 0.15, z: 11.5, yaw: -Math.PI * 0.38 },
+        { x:  8.75, y: 0.15, z: -6.0, yaw:  Math.PI * 0.38 },
+        { x: -8.75, y: 0.15, z: -38.0, yaw: -Math.PI * 0.42 },
+        { x:  8.75, y: 0.15, z: -86.0, yaw:  Math.PI * 0.42 },
+        { x: -8.75, y: 0.15, z: -132.0, yaw: -Math.PI * 0.38 },
+        { x: 133.5, y: 0.0, z: -52.0, yaw: -Math.PI * 0.5 },
+      ];
+      for (const sp of stallSpots) {
+        const wrap = new THREE.Group();
+        const clone = stallGltf.scene.clone(true);
+        clone.scale.setScalar(scale);
+        clone.position.set(-ctr.x * scale, -box.min.y * scale, -ctr.z * scale);
+        clone.traverse((o) => {
+          if (o.isMesh) {
+            o.castShadow = false;
+            o.receiveShadow = true;
+          }
+        });
+        wrap.add(clone);
+        wrap.position.set(sp.x, sp.y, sp.z);
+        wrap.rotation.y = sp.yaw;
+        wrap.updateMatrix();
+        meshes.push(wrap);
+        out.colliders.push({
+          x: sp.x, y: sp.y + targetH * 0.45, z: sp.z,
+          hx: Math.max(0.6, sz.z * scale * 0.42),
+          hy: targetH * 0.45,
+          hz: Math.max(0.8, sz.x * scale * 0.42),
+        });
+        out.lights.push({
+          pos: [sp.x + (sp.x < 0 ? 0.6 : -0.6), sp.y + 1.85, sp.z],
+          color: [1.0, 0.72, 0.36],
+          intensity: 5.5,
+          distance: 7.5,
+        });
+      }
+      console.log(`[buildings] spawned ${stallSpots.length} PBR Jiangnan night-market stalls`);
+    }
+  } catch (e) {
+    console.warn('[buildings] stall load skipped', e);
+  }
+
   console.log(`[buildings] props: ${acM.length} AC units, ${tankM.length + ptankM.length} tanks`);
   return meshes;
 }

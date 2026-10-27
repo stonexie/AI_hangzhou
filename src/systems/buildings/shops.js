@@ -31,8 +31,8 @@ const SHOP_WEIGHTS = {
   alley: [['izakaya', 3], ['bar', 2.5], ['ramen', 1.4], ['shutter', 0.7]],
 };
 const LIGHT = {
-  ramen: [1.0, 0.7, 0.42], konbini: [0.85, 0.93, 1.0], izakaya: [1.0, 0.62, 0.32], pachinko: [1.0, 0.85, 0.7],
-  bar: [1.0, 0.6, 0.65], boutique: [1.0, 0.92, 0.82], lobby: [0.9, 0.95, 1.0],
+  ramen: [1.0, 0.72, 0.44], konbini: [1.0, 0.86, 0.66], izakaya: [1.0, 0.64, 0.34], pachinko: [1.0, 0.84, 0.62],
+  bar: [1.0, 0.65, 0.55], boutique: [1.0, 0.90, 0.76], lobby: [0.96, 0.92, 0.84],
 };
 
 export class ShopBuilder {
@@ -68,9 +68,11 @@ export class ShopBuilder {
     const fasH = rng.range(0.75, 1.0);
     const ho = H - fasH; // opening height
     ctx.ho = ho; ctx.s0 = pw; ctx.s1 = W - pw; ctx.fasH = fasH;
-    // fascia: dark painted metal band (signage mounts on top of it)
-    const fasCol = rng.pick([[0.08, 0.08, 0.09], [0.16, 0.05, 0.04], [0.85, 0.85, 0.82], [0.05, 0.07, 0.1], [0.3, 0.3, 0.3]]);
+    // fascia: dark painted metal/wood band (signage mounts on top of it)
+    const fasCol = rng.pick([[0.08, 0.08, 0.09], [0.18, 0.06, 0.05], [0.22, 0.14, 0.09], [0.06, 0.09, 0.12], [0.16, 0.14, 0.12]]);
     this.dbox(ctx, W / 2, ho + fasH / 2, -0.12, W - 0.02, fasH, 0.26, fasCol, 0, 0.45, 0.3, 0.6);
+    // Traditional Jiangnan overhanging grey-tile eave (黛瓦飞檐 + 木椽) above ground-floor shopfront
+    this.jiangnanEave(ctx);
     // fascia downlights strip
     for (let s = 0.8; s < W - 0.5; s += rng.range(1.4, 2.2)) this.dbox(ctx, s, ho - 0.01, -0.2, 0.1, 0.025, 0.1, [1, 0.8, 0.6], 1.6, 0.5, 0, 0);
 
@@ -90,6 +92,36 @@ export class ShopBuilder {
       this.dbox(ctx, ms, 0.65, -0.2, 0.04, 1.3, 0.04, [0.6, 0.55, 0.2], 0, 0.5, 0.4, 0.7); // gas riser
     }
     return type;
+  }
+
+  // Traditional Jiangnan grey-tile overhanging shopfront eave (立体黛瓦小披檐 + 轩顶木底 + 飞椽 + 翘角)
+  jiangnanEave(c) {
+    const { W, ho, fasH } = c;
+    const yBase = ho + fasH;
+    const dOut = -0.88;
+    const tileCol = [0.11, 0.13, 0.15];
+    const ridgeCol = [0.20, 0.22, 0.25];
+    const woodCol = [0.38, 0.22, 0.11];
+    const goldTrim = [0.85, 0.64, 0.28];
+    // 3 stepped grey-tile eave tiers (visible from both street level below and overlook above)
+    this.dbox(c, W / 2, yBase + 0.24, -0.24, W + 0.06, 0.11, 0.36, tileCol, 0, 0.38, 0.15, 0.3);
+    this.dbox(c, W / 2, yBase + 0.15, -0.50, W + 0.12, 0.09, 0.34, tileCol, 0, 0.36, 0.15, 0.3);
+    this.dbox(c, W / 2, yBase + 0.07, -0.74, W + 0.18, 0.075, 0.28, ridgeCol, 0, 0.34, 0.2, 0.25);
+    // Warm wooden soffit underside & glowing golden eave drip-edge molding
+    this.dbox(c, W / 2, yBase + 0.02, -0.46, W - 0.04, 0.03, 0.72, woodCol, 0.06, 0.52, 0.05, 0.25);
+    this.dbox(c, W / 2, yBase + 0.035, dOut + 0.02, W + 0.16, 0.032, 0.045, goldTrim, 0.35, 0.3, 0.65, 0.15);
+    // Upturned flying-eave corner wings (江南飞檐翘角) at left and right ends
+    for (const side of [0, 1]) {
+      const sx = side === 0 ? -0.04 : W + 0.04;
+      this.dbox(c, sx, yBase + 0.14, dOut + 0.06, 0.22, 0.07, 0.24, ridgeCol, 0, 0.35, 0.2, 0.25);
+      this.dbox(c, sx, yBase + 0.20, dOut + 0.02, 0.14, 0.06, 0.16, goldTrim, 0.22, 0.35, 0.5, 0.2);
+    }
+    // Carved wooden rafters (木飞椽) underneath the eave every ~0.50m
+    const nRafters = Math.max(4, Math.floor((W - 0.4) / 0.50));
+    for (let i = 0; i <= nRafters; i++) {
+      const s = 0.20 + (W - 0.4) * (i / nRafters);
+      this.dbox(c, s, yBase - 0.015, -0.45, 0.055, 0.055, 0.76, woodCol, 0, 0.5, 0.05, 0.3);
+    }
   }
 
   // ---------- primitives ----------
